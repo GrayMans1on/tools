@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "gifenc": "^1.0.3",
+    "h264-mp4-encoder": "^1.0.12",
+    "icojs": "^1.0.1",
+    "jsqr": "^1.4.0",
+    "jszip": "^3.10.2",
+    "lamejs": "^1.2.1",
+    "mammoth": "^1.13.0",
+    "marked": "^18.1.2",
+    "mp4-muxer": "^5.2.2",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
+    "soundtouchjs": "^0.3.0",
+    "xlsx": "^0.18.5"
+  }
+}

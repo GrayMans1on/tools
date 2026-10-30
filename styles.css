@@ -124,3 +124,24 @@ h3 > span { font-size: 19px; color: #9499aa; font-weight: 400; }
   .tool-topline > span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .tool-card { transition: none; } }
+.sidebar-body { min-height: 0; overflow-y: auto; margin-top: 34px; scrollbar-width: thin; }
+.sidebar { padding-bottom: 18px; }
+.nav-item { padding-block: 10px; min-height: 40px; }
+.nav-symbol { width: 19px; flex: none; text-align: center; font-size: 17px; color: #7b8398; }
+.nav-section { margin-top: 23px; }
+.tool-illustration { height: 145px; }
+.tool-illustration > span { font-size: 54px; font-weight: 550; letter-spacing: -3px; color: #737c98; }
+.tool-card { max-width: none; }
+.tool-card h3 { font-size: 19px; }
+.catalog-search { display: flex; gap: 12px; margin-bottom: 24px; }
+.catalog-search label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.catalog-search input, .catalog-search select { border: 1px solid #dfe2eb; border-radius: 8px; padding: 12px; font: inherit; font-size: 13px; background: white; color: #51586d; }
+.catalog-search input { flex: 1; min-width: 0; }
+@media (max-width: 700px) {
+  .sidebar-body { margin-top: 15px; overflow: visible; }
+  .sidebar-body nav { overflow-x: auto; max-width: 100%; padding-bottom: 5px; }
+  .nav-item { flex: none; white-space: nowrap; }
+  .nav-item:not(.active):not([data-page="home"]) { display: none; }
+  .catalog-search { flex-wrap: wrap; }
+  .catalog-search select { max-width: 100%; }
+}

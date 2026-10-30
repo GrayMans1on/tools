@@ -1,0 +1,11 @@
+export { default as JSZip } from 'jszip';
+export * as XLSX from 'xlsx';
+export { default as QRCode } from 'qrcode';
+export { default as jsQR } from 'jsqr';
+export { GIFEncoder, quantize, applyPalette } from 'gifenc';
+export { Muxer, ArrayBufferTarget } from 'mp4-muxer';
+export { SoundTouch, SimpleFilter } from 'soundtouchjs';
+export { PDFDocument } from 'pdf-lib';
+export { marked } from 'marked';
+export { default as mammoth } from 'mammoth/mammoth.browser.js';
+export { decodeIco, encodeIco } from 'icojs';
