@@ -1,4 +1,5 @@
 import { tools } from './catalog.js';
+import { cardIllustration } from './illustrations.js';
 
 const homeView = document.getElementById('home-view');
 const toolView = document.getElementById('tool-view');
@@ -46,7 +47,7 @@ function renderCatalog() {
     card.className = 'tool-card';
     card.href = `#${tool.id}`;
     card.innerHTML = tool.id === 'pixel-nearest' ? originalArt :
-      `<div class="card-art tool-illustration" aria-hidden="true"><span>${tool.symbol}</span></div>`;
+      `<div class="card-art tool-illustration" aria-hidden="true">${cardIllustration(tool.id)}</div>`;
     const content = document.createElement('div');
     content.className = 'card-content';
     const categoryLabel = document.createElement('div');
