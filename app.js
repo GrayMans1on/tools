@@ -29,7 +29,7 @@ function showPage() {
   const page = isTool ? 'pixel-nearest' : 'home';
   homeView.hidden = isTool;
   toolView.hidden = !isTool;
-  breadcrumb.textContent = isTool ? 'Pixel Nearest' : 'Главная';
+  breadcrumb.textContent = isTool ? 'Pixel Upscaler' : 'Главная';
   document.title = `${breadcrumb.textContent} — GrayMansion Tools`;
   for (const link of document.querySelectorAll('[data-page]')) {
     const active = link.dataset.page === page;
