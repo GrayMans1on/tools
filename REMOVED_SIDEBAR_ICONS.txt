@@ -1,0 +1,18 @@
+Removed at user request: sidebar icons only. Card illustrations are retained.
+
+Home icon:
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-7h6v7"/></svg>
+
+Dynamic tool icon construction:
+  const icon = document.createElement('span');
+  icon.className = 'nav-symbol';
+  icon.textContent = tool.symbol;
+
+Previous insertion:
+  link.append(icon, name);
+
+Now:
+  link.append(name);
+
+Static fallback tool icon:
+<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>

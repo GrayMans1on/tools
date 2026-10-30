@@ -1,5 +1,5 @@
-import { tools } from './catalog.js';
-import { cardIllustration } from './illustrations.js';
+import { tools } from './catalog.js?v=20261030-v05';
+import { cardIllustration } from './illustrations.js?v=20261030-v05';
 
 const homeView = document.getElementById('home-view');
 const toolView = document.getElementById('tool-view');
@@ -20,12 +20,9 @@ for (const tool of tools) {
   link.className = 'nav-item';
   link.href = `#${tool.id}`;
   link.dataset.page = tool.id;
-  const icon = document.createElement('span');
-  icon.className = 'nav-symbol';
-  icon.textContent = tool.symbol;
   const name = document.createElement('span');
   name.textContent = tool.name;
-  link.append(icon, name);
+  link.append(name);
   nav.append(link);
 }
 document.querySelector('h2 > span').textContent = String(tools.length).padStart(2, '0');
@@ -111,7 +108,7 @@ function showPage() {
   if (tool && currentTool !== tool.id) {
     frame.title = tool.name;
     toolView.setAttribute('aria-label', tool.name);
-    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html' : `tools/workbench.html?tool=${tool.id}#${tool.id}`;
+    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html' : `tools/workbench.html?v=20261030-v05&tool=${tool.id}#${tool.id}`;
     document.querySelector('.tool-topline > span').textContent = tool.category.toUpperCase();
     currentTool = tool.id;
   }

@@ -135,3 +135,50 @@ summary { cursor: pointer; font: 12px/1.7 ui-monospace, monospace; }
 .mock-project > div { display: flex; gap: 5px; align-items: center; }
 .mock-project .app-dot { width: 18px; height: 18px; border-radius: 50%; }
 .tile.checker { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap: 12px; margin: 20px 0; }
+.stat { padding: 18px; background: #f5f6fb; border-radius: 9px; }
+.stat strong { display: block; font-size: 25px; margin-bottom: 6px; }
+.stat span { color: #838b9e; font-size: 11px; }
+.file-row, .replace-row { display: flex; gap: 9px; align-items: center; margin: 10px 0; }
+.file-row span { flex: 1; overflow-wrap: anywhere; font-size: 13px; }
+.file-row button, .replace-row button { padding: 8px 10px; }
+.replace-row input { min-width: 0; margin-top: 0 !important; }
+.issue { display: grid; gap: 9px; padding: 14px 0; border-top: 1px solid var(--line); font-size: 12px; }
+.issue code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.issue button { justify-self: start; }
+mark { color: #634f26; background: #f5e6be; }
+.symbol-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(85px,1fr)); gap: 9px; }
+.symbol-cell, .emoji-cell { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.symbol-cell > button:first-child, .emoji-cell > button:first-child { width: 100%; background: #fafbfe; border: 0; border-radius: 0; padding: 24px 8px 13px; min-height: 100px; }
+.symbol-cell span { display: block; font-size: 28px; color: #343b50; margin: 5px 0 10px; }
+.symbol-cell > button:last-child, .emoji-cell > button:last-child { position: absolute; right: 0; top: 0; border: 0; padding: 2px 5px; background: transparent; font-size: 16px; }
+.symbol-cell small { font-size: 9px; }
+.emoji-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(135px,1fr)); gap: 9px; }
+.emoji-cell span { display: block; font-size: 32px; margin-bottom: 10px; }
+.emoji-cell span.kaomoji { font-size: 17px; white-space: nowrap; }
+.emoji-cell small { display: block; font-size: 10px; line-height: 1.5; min-height: 30px; }
+.symbol-large { font-size: 24px; }
+.font-sample { padding: 24px; margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.font-contexts { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 12px; margin-top: 18px; }
+.font-contexts > div { padding: 20px; background: #f4f5fa; border-radius: 10px; }
+.font-contexts .font-dark { background: #303646; color: #fff; }
+.glyph-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(35px,1fr)); gap: 4px; margin-top: 18px; }
+.glyph-grid span { text-align: center; padding: 5px; background: #f5f6fa; font-size: 22px; }
+.spectrum-stage { position: relative; }
+#spectrumCursor { position: absolute; top: 3%; bottom: 11%; width: 1px; background: white; box-shadow: 0 0 2px #000; pointer-events: none; }
+#spectrumCanvas { touch-action: none; cursor: crosshair; }
+.timer-finished { background: #f2e8db; border-color: #d4b68b; }
+#timingStage:fullscreen { background: white; padding: 40px; overflow: auto; }
+.board-tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; }
+.board-tools button { font-size: 11px; padding: 9px 11px; }
+.board-tools button[aria-pressed="true"] { background: #606a86; color: white; }
+.board-stage { height: 600px; width: 100%; position: relative; border: 1px solid #d5dbea; border-radius: 10px; overflow: hidden; margin-bottom: 18px; background: white; }
+.board-stage:fullscreen { width: 100vw; height: 100vh; border: 0; border-radius: 0; }
+#boardCanvas { width: 100%; height: 100%; border-radius: 0; touch-action: none; display: block; }
+.board-zoom { position: absolute; bottom: 12px; right: 12px; display: flex; align-items: center; gap: 7px; background: #ffffffed; border: 1px solid #e1e4ed; border-radius: 8px; padding: 5px; }
+.board-zoom button { padding: 7px 10px; font-size: 11px; }
+#zoomLevel { font-size: 11px; min-width: 38px; text-align: center; }
+@media (max-width:650px) { .board-stage { height: 480px; } .replace-row { flex-wrap: wrap; } .replace-row input { flex: 1 0 40%; } .file-row { flex-wrap: wrap; } .file-row span { flex-basis: 100%; } .board-zoom { right: 5px; bottom: 5px; gap: 3px; } .board-zoom button { padding: 7px; } }
+.button { max-width: 100%; overflow-wrap: anywhere; }
+#content:fullscreen { background: white; overflow-y: auto; padding: 20px; }
+#content:fullscreen .board-stage { height: 60vh; }

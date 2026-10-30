@@ -1,10 +1,12 @@
 window.addEventListener('hashchange', () => { location.reload(); });
-import { tools } from '../catalog.js';
+import { tools } from '../catalog.js?v=20261030-v05';
 import { esc } from './ui.js';
 const id = location.hash.slice(1);
 const tool = tools.find(item => item.id === id);
 const app = document.getElementById('app');
 const modules = {
+  textfiles: 'text', textlab: 'text', textcheck: 'text', unicode: 'symbols', symbols: 'symbols', emoji: 'symbols',
+  fonts: 'fonts', stylize: 'stylize', spectrum: 'spectrum', timing: 'timing', board: 'board',
   palette: 'images', segments: 'images', icons: 'images',
   json: 'data', tables: 'data', layout: 'data',
   clocks: 'utilities', dates: 'utilities', random: 'utilities', prompter: 'utilities',

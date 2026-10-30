@@ -54,6 +54,18 @@ function qrPattern(x, y, cell = 3) {
 }
 
 const pictures = {
+  textfiles: () => sheet(49, 46, 'TXT') + arrow(131, 86) + [0,1,2].map(i => sheet(199 + i * 8, 38 + i * 12, '0' + (i + 1), '#9aa9c4')).reverse().join(''),
+  unicode: () => rect(40, 44, 88, 83, paper, 7, '#bac3d7') + text(84, 100, 'Ж', 43, ink, 'text-anchor="middle"') + arrow(144, 85) + text(242, 75, 'U+0416', 17, ink, 'text-anchor="middle"') + text(242, 100, 'D0 96', 12, '#8a97af', 'text-anchor="middle"') + text(242, 122, 'CYRILLIC', 8, '#939db1', 'text-anchor="middle" letter-spacing="1"'),
+  symbols: () => [0,1,2,3,4,5].map(i => rect(66 + i % 3 * 66, 34 + Math.floor(i / 3) * 57, 56, 48, paper, 5, '#c0c8da') + text(94 + i % 3 * 66, 67 + Math.floor(i / 3) * 57, ['→','∞','∑','♫','⌘','±'][i], 26, i === 1 ? '#8aa593' : ink, 'text-anchor="middle"')).join(''),
+  emoji: () => [0,1,2].map(i => `<circle cx="${79 + i * 82}" cy="80" r="29" fill="${['#e3d5b8','#c7d8d0','#d2cde4'][i]}"/>` + `<path d="M${69 + i * 82} 74h1m18 0h1" stroke="${ink}" stroke-width="5" stroke-linecap="round"/>` + `<path d="M${67 + i * 82} 89q12 ${i === 1 ? -13 : 16} 24 0" fill="none" stroke="${ink}" stroke-width="2"/>`).join('') + text(160, 137, '( •‿• )', 16, '#929bb1', 'text-anchor="middle"'),
+  textcheck: () => windowFrame(49, 35, 221, 108) + text(68, 83, 'Текст без ошибок', 17) + rect(68, 95, 135, 7, '#dce1ed', 2) + rect(68, 111, 108, 7, '#e5e8f0', 2) + `<circle cx="247" cy="125" r="18" fill="#a3bfae"/><path d="m239 125 6 6 11-12" fill="none" stroke="white" stroke-width="3"/>`,
+  textlab: () => windowFrame(35, 38, 146, 95) + [0,1,2,3].map(i => rect(49, 65 + i * 15, [113,94,118,72][i], 5, '#bdc7d9', 2)).join('') + text(240, 83, '128', 31, ink, 'text-anchor="middle"') + text(240, 103, 'СЛОВ', 9, '#939db1', 'text-anchor="middle" letter-spacing="1"') + text(240, 126, 'а → б', 13, '#8da796', 'text-anchor="middle"'),
+  fonts: () => [0,1,2].map(i => rect(37 + i * 88, 47, 73, 81, paper, 5, '#bec7d9') + `<text x="${73 + i * 88}" y="99" text-anchor="middle" fill="${['#7c88a3','#8c9e8f','#9a8aa3'][i]}" font-family="${['serif','sans-serif','monospace'][i]}" font-size="35">Aa</text>`).join(''),
+  stylize: () => { let out = rect(46, 43, 87, 87, '#dce2ed', 5) + `<circle cx="75" cy="68" r="12" fill="#b4bfd5"/><path d="M46 130l32-43 23 24 32-37v56z" fill="#8c9bb6"/>` + arrow(146, 86); for (let y = 0; y < 9; y += 1) { for (let x = 0; x < 9; x += 1) { out += `<circle cx="${202 + x * 9}" cy="${48 + y * 9}" r="${1 + ((x + y * 2) % 5) * .55}" fill="${ink}"/>`; } } return out; },
+  spectrum: () => { let out = rect(42, 39, 237, 102, '#343b50', 5); for (let x = 0; x < 33; x += 1) { for (let y = 0; y < 12; y += 1) { const active = Math.abs(y - (5 + Math.sin(x * .3) * 3)) < 2; out += rect(50 + x * 6.7, 47 + y * 7, 5, 5, active ? '#cda995' : ['#46526d','#536780','#6d8797'][(x + y) % 3], 1); } } return out + text(160, 157, 'ВРЕМЯ →', 8, '#939db1', 'text-anchor="middle"'); },
+  timing: () => clock(90, 83, 36, 1, '') + rect(157, 50, 112, 68, paper, 6, '#b6c1d6') + text(213, 92, '05:00', 27, ink, 'text-anchor="middle"') + rect(187, 127, 24, 7, '#a5bdaf', 3) + rect(218, 127, 24, 7, '#bcc6d9', 3),
+  board: () => windowFrame(32, 29, 255, 116) + rect(51, 58, 65, 34, '#dce7df', 4, '#a8bdae') + rect(172, 93, 85, 31, '#e1deed', 4, '#b5accb') + `<path d="M116 76h36v31h20m-7-5 7 5-7 5M54 120q16-27 30-8t28-11" fill="none" stroke="${ink}" stroke-width="2"/>` + text(83, 80, 'Идея', 11, ink, 'text-anchor="middle"') + text(213, 113, 'Результат', 11, ink, 'text-anchor="middle"') + grid(179, 53, 57, 27, 3, 3),
+
   palette: () => {
     const colors = ['#4e6078', '#869eb3', '#bdc8d4', '#9dbba8', '#e1c9a8'];
     return windowFrame(38, 44, 100, 77) + rect(46, 66, 84, 47, '#c4d0df', 2) +
