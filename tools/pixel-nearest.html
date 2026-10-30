@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pixel Nearest — пакетный апскейл</title>
+<style>
+  :root { color-scheme: dark; font-family: Inter, Segoe UI, Arial, sans-serif; background: #101217; color: #e9edf4; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 18px; }
+  main { width: min(860px, 100%); margin: 0 auto; }
+  .heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 24px; }
+  h1 { font-size: 27px; margin: 0 0 7px; letter-spacing: -.5px; }
+  h2 { font-size: 15px; margin: 0; }
+  p { color: #98a2b2; margin: 0; line-height: 1.55; font-size: 14px; }
+  .chip { color: #bbcadf; border: 1px solid #363c4b; border-radius: 999px; padding: 7px 10px; font-size: 12px; white-space: nowrap; }
+  .panel { background: #191d26; border: 1px solid #303543; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .drop { border: 2px dashed #4a5570; border-radius: 14px; text-align: center; padding: 37px 14px; cursor: pointer; transition: .15s; }
+  .drop:hover, .drop.over { border-color: #77a8ff; background: #212d40; }
+  .drop strong { font-size: 18px; display: block; margin: 0 0 8px; }
+  .drop span { display: block; color: #91a1b9; font-size: 13px; }
+  .drop .plus { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: #2d405e; color: #c8deff; font-size: 28px; margin-bottom: 13px; }
+  input[type="file"] { display: none; }
+  .settings { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .settings .range-wrap { flex: 1; min-width: 160px; }
+  label { font-size: 14px; color: #cdd5e1; display: block; margin-bottom: 9px; }
+  input[type="range"] { width: 100%; accent-color: #78aaff; cursor: pointer; }
+  input[type="number"] { width: 95px; background: #11141b; border: 1px solid #424c60; color: white; border-radius: 10px; padding: 12px; font-size: 19px; font-weight: 700; }
+  .range-label { display: flex; justify-content: space-between; color: #7f8ba0; font-size: 11px; margin-top: 3px; }
+  .files-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 12px; }
+  button { border: 0; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #e6edfa; background: #30394b; font-weight: 600; cursor: pointer; }
+  button:hover:not(:disabled) { filter: brightness(1.12); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.primary { background: #3679e3; color: #fff; padding: 15px 19px; font-size: 15px; }
+  button.ghost { background: transparent; color: #a3afc1; padding: 7px 10px; }
+  button.remove { font-size: 19px; line-height: 1; padding: 5px 9px; }
+  #list { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }
+  .item { display: flex; align-items: center; gap: 13px; background: #11141b; padding: 9px 12px; border-radius: 11px; min-width: 0; }
+  .thumb { width: 52px; height: 52px; object-fit: contain; image-rendering: pixelated; border-radius: 5px; flex: none; background-color: #343a44; background-image: linear-gradient(45deg,#464b55 25%,transparent 25%), linear-gradient(-45deg,#464b55 25%,transparent 25%), linear-gradient(45deg,transparent 75%,#464b55 75%), linear-gradient(-45deg,transparent 75%,#464b55 75%); background-size: 12px 12px; background-position: 0 0,0 6px,6px -6px,-6px 0; }
+  .file-info { min-width: 0; flex: 1; }
+  .filename { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; font-weight: 600; }
+  .dimensions { font-size: 12px; color: #91a0b5; margin-top: 5px; }
+  .bad { color: #ffad97; }
+  .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .message { font-size: 13px; color: #9cb3d0; min-height: 20px; }
+  .warn { color: #eab17d; font-size: 12px; margin-top: 13px; }
+  .bar { height: 6px; background: #303745; overflow: hidden; border-radius: 9px; margin-top: 14px; display: none; }
+  .bar > div { height: 100%; width: 0%; background: #78aaff; transition: width .1s; }
+  .footer { color: #718096; font-size: 12px; margin-top: 17px; }
+  @media (max-width: 520px) { .heading { flex-direction: column; } h1 { font-size: 23px; } .panel { padding: 13px; } }
+</style>
+
+<style>
+  :root { color-scheme: light; background: #f6f7f9; color: #202529; }
+  body { padding: 0 0 20px; display: flow-root; }
+  main { width: 100%; max-width: 980px; margin: 0; }
+  h1 { font-size: 32px; font-weight: 650; }
+  p { color: #7a858d; }
+  .heading { margin-bottom: 28px; }
+  .heading p { font-size: 13px; max-width: 620px; }
+  .chip { color: #4c7959; border-color: #d9e4da; background: #edf4ed; }
+  .panel { background: #fff; border-color: #e0e5e7; border-radius: 12px; }
+  .drop { border-color: #c4d6c6; border-width: 1px; background: #f8faf7; }
+  .drop:hover, .drop.over { border-color: #659675; background: #edf4ed; }
+  .drop .plus { background: #e4eee4; color: #4b7956; }
+  .drop span, .dimensions { color: #87938b; }
+  label { color: #58675c; }
+  input[type="range"] { accent-color: #337d5b; }
+  input[type="number"] { color: #263e2e; background: #f6f8f5; border-color: #d6e1d6; }
+  button { color: #46674f; background: #e9f0e7; }
+  button.primary { background: #337d5b; color: #fff; }
+  button.ghost { color: #7e8c82; }
+  .item { background: #f4f7f3; }
+  .bad { color: #b54e35; }
+  .message { color: #718475; }
+  .warn { color: #9d8154; }
+  .footer { color: #8a968b; }
+  .bar { background: #e7eee4; }
+  .bar > div { background: #659675; }
+  :focus-visible { outline: 3px solid #337d5b; outline-offset: 4px; }
+  @media (max-width: 520px) { h1 { font-size: 27px; } .drop { padding: 28px 12px; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="heading">
+    <div><h1>Pixel Nearest</h1><p>Пакетное увеличение пиксель-арта без размытия. Всё обрабатывается локально в браузере.</p></div>
+    <div class="chip">1–100× · PNG · ZIP</div>
+  </div>
+  <section class="panel">
+    <div id="drop" class="drop" tabindex="0" role="button" aria-label="Добавить изображения">
+      <div class="plus">+</div>
+      <strong>Перетащи сюда изображения</strong>
+      <span>или нажми, чтобы выбрать несколько файлов сразу</span>
+      <span style="margin-top:8px">PNG, JPEG, WEBP, BMP, GIF (первый кадр)</span>
+    </div>
+    <input id="picker" type="file" multiple accept=".png,.jpg,.jpeg,.webp,.bmp,.gif,image/png,image/jpeg,image/webp,image/bmp,image/gif">
+  </section>
+  <section class="panel">
+    <div class="settings">
+      <div class="range-wrap">
+        <label for="scaleRange">Масштаб — строго Nearest Neighbour</label>
+        <input id="scaleRange" type="range" min="1" max="100" value="8" step="1">
+        <div class="range-label"><span>1×</span><span>50×</span><span>100×</span></div>
+      </div>
+      <div><label for="scaleNumber">Множитель</label><input id="scaleNumber" type="number" min="1" max="100" value="8" step="1"></div>
+    </div>
+    <p class="warn">Пиксели не сглаживаются. Для защиты памяти браузера одно итоговое изображение ограничено 100 млн пикселей и стороной до 16 384 px.</p>
+  </section>
+  <section class="panel">
+    <div class="files-heading"><h2 id="fileCount">Изображения (0)</h2><button id="clear" class="ghost" type="button">Очистить список</button></div>
+    <div id="list"><p>Пока ничего не добавлено.</p></div>
+  </section>
+  <section class="panel">
+    <div class="actions">
+      <button id="download" class="primary" type="button" disabled>Скачать результат</button>
+      <span id="status" class="message">Добавь изображения для обработки.</span>
+    </div>
+    <div id="progress" class="bar"><div id="progressFill"></div></div>
+    <p class="footer">Если выбран один файл — скачивается PNG. Если несколько — один ZIP со всеми PNG. Исходники не изменяются и никуда не загружаются.</p>
+  </section>
+</main>
+<script>
+'use strict';
+
+const picker = document.getElementById('picker');
+const drop = document.getElementById('drop');
+const list = document.getElementById('list');
+const count = document.getElementById('fileCount');
+const clearButton = document.getElementById('clear');
+const downloadButton = document.getElementById('download');
+const status = document.getElementById('status');
+const scaleRange = document.getElementById('scaleRange');
+const scaleNumber = document.getElementById('scaleNumber');
+const progress = document.getElementById('progress');
+const progressFill = document.getElementById('progressFill');
+const MAX_PIXELS = 100_000_000;
+const MAX_SIDE = 16_384;
+const entries = [];
+let busy = false;
+let scale = 8;
+
+function escapeFileBase(filename) {
+  return filename.replace(/\.[^.]+$/, '').replace(/[<>:"/\\|?*\x00-\x1f]/g, '_') || 'image';
+}
+
+function sizeInfo(entry) {
+  const width = entry.width * scale;
+  const height = entry.height * scale;
+  const tooLarge = width > MAX_SIDE || height > MAX_SIDE || width * height > MAX_PIXELS;
+  return {width, height, tooLarge};
+}
+
+function refresh() {
+  count.textContent = `Изображения (${entries.length})`;
+  list.replaceChildren();
+  if (entries.length === 0) {
+    const empty = document.createElement('p');
+    empty.textContent = 'Пока ничего не добавлено.';
+    list.append(empty);
+  }
+  for (const entry of entries) {
+    const item = document.createElement('div');
+    item.className = 'item';
+    const img = document.createElement('img');
+    img.className = 'thumb';
+    img.src = entry.url;
+    img.alt = '';
+    const info = document.createElement('div');
+    info.className = 'file-info';
+    const name = document.createElement('div');
+    name.className = 'filename';
+    name.title = entry.file.name;
+    name.textContent = entry.file.name;
+    const dims = document.createElement('div');
+    dims.className = 'dimensions';
+    const target = sizeInfo(entry);
+    dims.textContent = `${entry.width}×${entry.height} → ${target.width}×${target.height} px`;
+    if (target.tooLarge) {
+      dims.classList.add('bad');
+      dims.textContent += ' · слишком большое изображение';
+    }
+    const remove = document.createElement('button');
+    remove.className = 'ghost remove';
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.title = 'Убрать файл из списка';
+    remove.disabled = busy;
+    remove.addEventListener('click', () => {
+      const index = entries.indexOf(entry);
+      if (index !== -1) {
+        entries.splice(index, 1);
+        URL.revokeObjectURL(entry.url);
+        refresh();
+      }
+    });
+    info.append(name, dims);
+    item.append(img, info, remove);
+    list.append(item);
+  }
+  const invalid = entries.filter(entry => sizeInfo(entry).tooLarge).length;
+  downloadButton.disabled = busy || entries.length === 0 || invalid > 0;
+  downloadButton.textContent = entries.length > 1 ? `Скачать ZIP (${entries.length} PNG)` : 'Скачать PNG';
+  clearButton.disabled = busy || entries.length === 0;
+  picker.disabled = busy;
+  scaleRange.disabled = busy;
+  scaleNumber.disabled = busy;
+  if (!busy) {
+    status.textContent = invalid > 0 ? 'Уменьши масштаб: некоторые итоговые изображения слишком велики.' :
+      entries.length > 0 ? 'Готово к обработке.' : 'Добавь изображения для обработки.';
+  }
+}
+
+async function addFiles(files) {
+  if (busy) {
+    return;
+  }
+  const known = new Set(entries.map(entry => `${entry.file.name}|${entry.file.size}|${entry.file.lastModified}`));
+  let added = 0;
+  let rejected = 0;
+  for (const file of Array.from(files)) {
+    const lowerName = file.name.toLowerCase();
+    const valid = /\.(png|jpe?g|webp|bmp|gif)$/.test(lowerName) || /^image\/(png|jpeg|webp|bmp|gif)$/.test(file.type);
+    const key = `${file.name}|${file.size}|${file.lastModified}`;
+    if (!valid || known.has(key)) {
+      continue;
+    }
+    const url = URL.createObjectURL(file);
+    try {
+      const bitmap = await createImageBitmap(file);
+      if (bitmap.width === 0 || bitmap.height === 0) {
+        throw new Error('Invalid image dimensions');
+      }
+      entries.push({file, url, width: bitmap.width, height: bitmap.height});
+      bitmap.close();
+      known.add(key);
+      added += 1;
+    } catch (error) {
+      URL.revokeObjectURL(url);
+      rejected += 1;
+    }
+  }
+  refresh();
+  if (rejected > 0) {
+    status.textContent = `Добавлено: ${added}. Не удалось прочитать: ${rejected}.`;
+  }
+}
+
+function setScale(value) {
+  const n = Number(value);
+  scale = Number.isFinite(n) ? Math.max(1, Math.min(100, Math.round(n))) : 8;
+  scaleRange.value = String(scale);
+  scaleNumber.value = String(scale);
+  refresh();
+}
+
+picker.addEventListener('change', async () => {
+  await addFiles(picker.files);
+  picker.value = '';
+});
+drop.addEventListener('click', () => {
+  if (!busy) {
+    picker.click();
+  }
+});
+drop.addEventListener('keydown', event => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    if (!busy) {
+      picker.click();
+    }
+  }
+});
+for (const eventName of ['dragenter', 'dragover']) {
+  drop.addEventListener(eventName, event => {
+    event.preventDefault();
+    drop.classList.add('over');
+  });
+}
+for (const eventName of ['dragleave', 'drop']) {
+  drop.addEventListener(eventName, event => {
+    event.preventDefault();
+    drop.classList.remove('over');
+  });
+}
+drop.addEventListener('drop', async event => {
+  await addFiles(event.dataTransfer.files);
+});
+window.addEventListener('dragover', event => {
+  event.preventDefault();
+});
+window.addEventListener('drop', event => {
+  event.preventDefault();
+});
+scaleRange.addEventListener('input', () => {
+  setScale(scaleRange.value);
+});
+scaleNumber.addEventListener('change', () => {
+  setScale(scaleNumber.value);
+});
+clearButton.addEventListener('click', () => {
+  for (const entry of entries) {
+    URL.revokeObjectURL(entry.url);
+  }
+  entries.length = 0;
+  refresh();
+});
+
+function makeDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+async function upscale(entry) {
+  const target = sizeInfo(entry);
+  if (target.tooLarge) {
+    throw new Error(`Слишком большой результат: ${entry.file.name} (${target.width}×${target.height}).`);
+  }
+  const bitmap = await createImageBitmap(entry.file);
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = target.width;
+    canvas.height = target.height;
+    const ctx = canvas.getContext('2d', {alpha: true});
+    if (!ctx) {
+      throw new Error('Не удалось создать изображение.');
+    }
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(bitmap, 0, 0, target.width, target.height);
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(value => {
+        if (value) {
+          resolve(value);
+        } else {
+          reject(new Error('Не удалось сохранить PNG. Попробуй меньший масштаб.'));
+        }
+      }, 'image/png');
+    });
+    canvas.width = 0;
+    canvas.height = 0;
+    return blob;
+  } finally {
+    bitmap.close();
+  }
+}
+
+const crcTable = new Uint32Array(256);
+for (let n = 0; n < 256; n += 1) {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) {
+    c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+  }
+  crcTable[n] = c >>> 0;
+}
+function crc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i += 1) {
+    crc = crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function dosDateTime(date) {
+  const year = Math.max(1980, date.getFullYear());
+  const dateNumber = ((year - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+  const timeNumber = (date.getHours() << 11) | (date.getMinutes() << 5) | (date.getSeconds() >> 1);
+  return {dateNumber, timeNumber};
+}
+
+async function createZip(files) {
+  if (files.length > 65535) {
+    throw new Error('В одном ZIP допускается не более 65535 файлов.');
+  }
+  const encoder = new TextEncoder();
+  const output = [];
+  const centralParts = [];
+  let offset = 0;
+  let centralSize = 0;
+  const dos = dosDateTime(new Date());
+  for (const file of files) {
+    const bytes = new Uint8Array(await file.blob.arrayBuffer());
+    const name = encoder.encode(file.name);
+    const length = bytes.length;
+    const checksum = crc32(bytes);
+    if (length > 0xFFFFFFFF || offset + length + name.length + 30 > 0xFFFFFFFF) {
+      throw new Error('Общий ZIP превышает лимит 4 ГБ. Сохрани файлы несколькими партиями.');
+    }
+    const local = new Uint8Array(30 + name.length);
+    const l = new DataView(local.buffer);
+    l.setUint32(0, 0x04034B50, true);
+    l.setUint16(4, 20, true);
+    l.setUint16(6, 0x0800, true);
+    l.setUint16(8, 0, true);
+    l.setUint16(10, dos.timeNumber, true);
+    l.setUint16(12, dos.dateNumber, true);
+    l.setUint32(14, checksum, true);
+    l.setUint32(18, length, true);
+    l.setUint32(22, length, true);
+    l.setUint16(26, name.length, true);
+    local.set(name, 30);
+    output.push(local, file.blob);
+
+    const central = new Uint8Array(46 + name.length);
+    const c = new DataView(central.buffer);
+    c.setUint32(0, 0x02014B50, true);
+    c.setUint16(4, 20, true);
+    c.setUint16(6, 20, true);
+    c.setUint16(8, 0x0800, true);
+    c.setUint16(10, 0, true);
+    c.setUint16(12, dos.timeNumber, true);
+    c.setUint16(14, dos.dateNumber, true);
+    c.setUint32(16, checksum, true);
+    c.setUint32(20, length, true);
+    c.setUint32(24, length, true);
+    c.setUint16(28, name.length, true);
+    c.setUint32(42, offset, true);
+    central.set(name, 46);
+    centralParts.push(central);
+    centralSize += central.length;
+    offset += local.length + length;
+  }
+  if (offset + centralSize > 0xFFFFFFFF) {
+    throw new Error('Архив слишком большой для ZIP без ZIP64.');
+  }
+  const end = new Uint8Array(22);
+  const e = new DataView(end.buffer);
+  e.setUint32(0, 0x06054B50, true);
+  e.setUint16(8, files.length, true);
+  e.setUint16(10, files.length, true);
+  e.setUint32(12, centralSize, true);
+  e.setUint32(16, offset, true);
+  return new Blob([...output, ...centralParts, end], {type: 'application/zip'});
+}
+
+async function exportAll() {
+  if (busy || entries.length === 0 || entries.some(entry => sizeInfo(entry).tooLarge)) {
+    return;
+  }
+  busy = true;
+  refresh();
+  progress.style.display = 'block';
+  progressFill.style.width = '0%';
+  const results = [];
+  const names = new Set();
+  try {
+    for (let i = 0; i < entries.length; i += 1) {
+      const entry = entries[i];
+      status.textContent = `Обработка ${i + 1}/${entries.length}: ${entry.file.name}`;
+      await new Promise(resolve => window.setTimeout(resolve, 10));
+      const blob = await upscale(entry);
+      const base = `${escapeFileBase(entry.file.name)}_NN_x${scale}`;
+      let name = `${base}.png`;
+      let suffix = 2;
+      while (names.has(name.toLowerCase())) {
+        name = `${base}_${suffix}.png`;
+        suffix += 1;
+      }
+      names.add(name.toLowerCase());
+      results.push({name, blob});
+      progressFill.style.width = `${Math.round((i + 1) / entries.length * 90)}%`;
+    }
+    if (results.length === 1) {
+      makeDownload(results[0].blob, results[0].name);
+    } else {
+      status.textContent = 'Упаковка PNG в ZIP…';
+      const archive = await createZip(results);
+      makeDownload(archive, `PixelNearest_${results.length}_files_x${scale}.zip`);
+    }
+    progressFill.style.width = '100%';
+    status.textContent = `Готово: ${results.length} PNG, масштаб ${scale}×. Проверь папку «Загрузки».`;
+  } catch (error) {
+    status.textContent = `Ошибка: ${error.message || error}`;
+    console.error(error);
+  } finally {
+    busy = false;
+    refresh();
+    progress.style.display = 'none';
+  }
+}
+downloadButton.addEventListener('click', exportAll);
+refresh();
+</script>
+</body>
+</html>
