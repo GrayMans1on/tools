@@ -51,33 +51,33 @@
 </style>
 
 <style>
-  :root { color-scheme: light; background: #f6f7f9; color: #202529; }
+  :root { color-scheme: light; background: #ffffff; color: #28282f; }
   body { padding: 0 0 20px; display: flow-root; }
   main { width: 100%; max-width: 980px; margin: 0; }
   h1 { font-size: 32px; font-weight: 650; }
-  p { color: #7a858d; }
+  p { color: #7d8291; }
   .heading { margin-bottom: 28px; }
   .heading p { font-size: 13px; max-width: 620px; }
-  .chip { color: #4c7959; border-color: #d9e4da; background: #edf4ed; }
-  .panel { background: #fff; border-color: #e0e5e7; border-radius: 12px; }
-  .drop { border-color: #c4d6c6; border-width: 1px; background: #f8faf7; }
-  .drop:hover, .drop.over { border-color: #659675; background: #edf4ed; }
-  .drop .plus { background: #e4eee4; color: #4b7956; }
-  .drop span, .dimensions { color: #87938b; }
-  label { color: #58675c; }
-  input[type="range"] { accent-color: #337d5b; }
-  input[type="number"] { color: #263e2e; background: #f6f8f5; border-color: #d6e1d6; }
-  button { color: #46674f; background: #e9f0e7; }
-  button.primary { background: #337d5b; color: #fff; }
-  button.ghost { color: #7e8c82; }
-  .item { background: #f4f7f3; }
+  .chip { color: #65708a; border-color: #dfe1eb; background: #f0f1f7; }
+  .panel { background: #fff; border-color: #e4e5eb; border-radius: 12px; }
+  .drop { border-color: #c8cddd; border-width: 1px; background: #fafafe; }
+  .drop:hover, .drop.over { border-color: #7d8599; background: #f0f1f7; }
+  .drop .plus { background: #e9ebf4; color: #69738d; }
+  .drop span, .dimensions { color: #8b90a0; }
+  label { color: #626a7d; }
+  input[type="range"] { accent-color: #5d657b; }
+  input[type="number"] { color: #33333e; background: #f7f7fb; border-color: #d9dce8; }
+  button { color: #636d85; background: #edf0f7; }
+  button.primary { background: #5d657b; color: #fff; }
+  button.ghost { color: #878e9f; }
+  .item { background: #f5f6fa; }
   .bad { color: #b54e35; }
-  .message { color: #718475; }
+  .message { color: #798297; }
   .warn { color: #9d8154; }
-  .footer { color: #8a968b; }
-  .bar { background: #e7eee4; }
-  .bar > div { background: #659675; }
-  :focus-visible { outline: 3px solid #337d5b; outline-offset: 4px; }
+  .footer { color: #9299ab; }
+  .bar { background: #eceef5; }
+  .bar > div { background: #7d8599; }
+  :focus-visible { outline: 3px solid #5d657b; outline-offset: 4px; }
   @media (max-width: 520px) { h1 { font-size: 27px; } .drop { padding: 28px 12px; } }
 </style>
 </head>
@@ -91,7 +91,7 @@
     <div id="drop" class="drop" tabindex="0" role="button" aria-label="Добавить изображения">
       <div class="plus">+</div>
       <strong>Перетащи сюда изображения</strong>
-      <span>или нажми, чтобы выбрать несколько файлов сразу</span>
+      <span>или нажми, чтобы выбрать файлы</span>
       <span style="margin-top:8px">PNG, JPEG, WEBP, BMP, GIF (первый кадр)</span>
     </div>
     <input id="picker" type="file" multiple accept=".png,.jpg,.jpeg,.webp,.bmp,.gif,image/png,image/jpeg,image/webp,image/bmp,image/gif">
@@ -99,7 +99,7 @@
   <section class="panel">
     <div class="settings">
       <div class="range-wrap">
-        <label for="scaleRange">Масштаб — строго Nearest Neighbour</label>
+        <label for="scaleRange">Масштаб</label>
         <input id="scaleRange" type="range" min="1" max="100" value="8" step="1">
         <div class="range-label"><span>1×</span><span>50×</span><span>100×</span></div>
       </div>
