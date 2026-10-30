@@ -51,7 +51,7 @@ GitHub Actions публикует сайт после изменений в `mai
 
 Eleven additional tools bring the catalog to 27 entries. Sidebar tool icons have been removed; card illustrations remain.
 
-- Text files: split by lines, Unicode code points or literal delimiter; merge with ordering, separators and optional filenames. UTF-8 output; UTF-8, Windows-1251 and UTF-16 LE input. Source files are never changed.
+- Text files: split by lines, Unicode code points, UTF-8 byte size, chapter/Markdown headings or literal delimiter; merge with ordering, separators and optional filenames. UTF-8 output; UTF-8, Windows-1251 and UTF-16 LE input. Source files are never changed.
 - Unicode inspector: code points, grapheme count, Unicode names/categories, UTF-8 and UTF-16. Bundled names use Unicode 14; newer characters may have no name.
 - Symbol catalog: categorized symbols, English-name/code search, favorites and recent choices stored locally.
 - Emoji and text emotions: 3998 emoji records from Emojibase 18 plus 28 kaomoji; Russian/English labels and tags, favorites and composition.

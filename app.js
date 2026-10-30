@@ -1,5 +1,5 @@
-import { tools } from './catalog.js?v=20261030-v05';
-import { cardIllustration } from './illustrations.js?v=20261030-v05';
+import { tools } from './catalog.js?v=20261030-v051';
+import { cardIllustration } from './illustrations.js?v=20261030-v051';
 
 const homeView = document.getElementById('home-view');
 const toolView = document.getElementById('tool-view');
@@ -108,7 +108,7 @@ function showPage() {
   if (tool && currentTool !== tool.id) {
     frame.title = tool.name;
     toolView.setAttribute('aria-label', tool.name);
-    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html' : `tools/workbench.html?v=20261030-v05&tool=${tool.id}#${tool.id}`;
+    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html' : `tools/workbench.html?v=20261030-v051&tool=${tool.id}#${tool.id}`;
     document.querySelector('.tool-topline > span').textContent = tool.category.toUpperCase();
     currentTool = tool.id;
   }

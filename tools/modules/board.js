@@ -114,16 +114,16 @@ export async function board(root) {
     if (tool === 'select') {
       const objects = selectedObjects(); const box = objects.length ? union(objects) : null;
       if (box && Math.hypot(point.x - box.x - box.w, point.y - box.y - box.h) < 13 / doc.view.zoom) {
-        remember(); interaction = {kind: 'scale', start: point, box, originals: JSON.parse(JSON.stringify(objects))}; return;
+        interaction = {kind: 'scale', start: point, box, originals: JSON.parse(JSON.stringify(objects))}; return;
       }
       const hit = choose(point, event.shiftKey);
-      if (hit && selected.has(hit.id)) { remember(); interaction = {kind: 'move', start: point, originals: JSON.parse(JSON.stringify(selectedObjects()))}; }
+      if (hit && selected.has(hit.id)) { interaction = {kind: 'move', start: point, originals: JSON.parse(JSON.stringify(selectedObjects()))}; }
       else if (!hit) { interaction = {kind: 'marquee', start: point, now: point, previous: event.shiftKey ? new Set(selected) : new Set()}; }
       render(); return;
     }
     remember(); const object = make(tool, point);
     if (tool === 'text') {
-      object.text = $('boardText').value || 'Новый текст'; object.w = 240; object.h = object.size * 1.3 * object.text.split('\n').length;
+      object.text = $('boardText').value || 'Новый текст'; ctx.font = `${object.size}px sans-serif`; object.w = Math.max(40, ...object.text.split('\n').map(line => ctx.measureText(line).width)); object.h = object.size * 1.3 * object.text.split('\n').length;
     } else if (tool === 'table') { object.text = $('boardText').value || 'Ячейка 1\tЯчейка 2\nЯчейка 3\tЯчейка 4'; object.w = 360; object.h = 160; }
     else if (tool === 'pen' || tool === 'highlight') { object.points = [[point.x, point.y]]; }
     doc.objects.push(object); selected = new Set([object.id]);
@@ -134,6 +134,7 @@ export async function board(root) {
   element.onpointermove = event => {
     if (!interaction) { return; } const point = world(event);
     if (interaction.kind === 'pan') { doc.view.x = interaction.x + event.clientX - interaction.clientX; doc.view.y = interaction.y + event.clientY - interaction.clientY; render(); return; }
+    if (['move','scale'].includes(interaction.kind) && !interaction.remembered) { remember(); interaction.remembered = true; }
     if (interaction.kind === 'draw') {
       const object = interaction.object; object.w = point.x - object.x; object.h = point.y - object.y;
       if (object.points && object.points.length < 50000) { object.points.push([point.x, point.y]); }

@@ -9,6 +9,9 @@ assert.equal(stats.words, 5); assert.equal(stats.paragraphs, 2); assert.equal(st
 assert.equal(textStats('👨‍👩‍👧‍👦').graphemes, 1);
 assert.deepEqual(splitText('a\nb\nc\n', 'lines', 2), ['a\nb\n', 'c\n']);
 assert.deepEqual(splitText('a😀b', 'characters', 2), ['a😀', 'b']);
+assert.deepEqual(splitText('абв', 'bytes', 4), ['аб','в']);
+assert.throws(() => splitText('😀', 'bytes', 3));
+assert.deepEqual(splitText('# Первая\nТекст\n# Вторая\nЕщё', 'chapters', 1), ['# Первая\nТекст\n','# Вторая\nЕщё']);
 assert.deepEqual(splitText('a---b', 'delimiter', 1, '---'), ['a','b']);
 assert.equal(replaceText('cat catapult кот котик', [['cat','dog'], ['кот','пёс']], false, false, true).text, 'dog catapult пёс котик');
 assert.equal(replaceText('12:34', [['(\\d+):(\\d+)','$2/$1']], true, false, false).text, '34/12');

@@ -1,5 +1,5 @@
 import { $, esc, field, select, files, action, status, number, download, bundle, baseName, copy } from '../ui.js';
-import { textStats, checkRules, checkText, fixText, splitText, replaceText } from '../text-core.js';
+import { textStats, checkRules, checkText, fixText, splitText, replaceText } from '../text-core.js?v=20261030-v051';
 
 export async function readText(file, encoding = 'utf-8') {
   if (file.size > 20 * 1024 * 1024) { throw new Error('Файл больше 20 МБ.'); }
@@ -26,7 +26,7 @@ function importHandler(callback) {
   });
 }
 export function textfiles(root) {
-  root.innerHTML = `<section class="panel">${select('mode', 'Режим', [['split', 'Разделить файл'], ['merge', 'Объединить файлы']])}${files('inputFiles', '.txt,.md,.csv,.tsv,.json,.log,.html,.docx')}${select('encoding', 'Кодировка входных файлов', [['utf-8', 'UTF-8'], ['windows-1251', 'Windows-1251'], ['utf-16le', 'UTF-16 LE']])}<div id="fileOrder"></div></section><section class="panel"><div id="splitOptions" class="row">${select('splitMode', 'Разделить по', [['lines', 'Числу строк'], ['characters', 'Числу символов'], ['delimiter', 'Разделителю']])}${field('amount', 'Строк / символов в части', 'number', 100, 'min="1" max="10000000"')}${field('delimiter', 'Разделитель', 'text', '---')}</div><div id="mergeOptions" hidden>${field('separator', 'Разделитель между файлами (\\n — перенос)', 'text', '\\n\\n')}<label><input id="headings" type="checkbox"> Добавить названия исходных файлов</label></div><div class="actions"><button id="prepare" class="primary">Подготовить результат</button><button id="saveFiles" disabled>Скачать</button></div><p id="fileSummary" class="muted"></p><pre id="filePreview"></pre></section>`;
+  root.innerHTML = `<section class="panel">${select('mode', 'Режим', [['split', 'Разделить файл'], ['merge', 'Объединить файлы']])}${files('inputFiles', '.txt,.md,.csv,.tsv,.json,.log,.html,.docx')}${select('encoding', 'Кодировка входных файлов', [['utf-8', 'UTF-8'], ['windows-1251', 'Windows-1251'], ['utf-16le', 'UTF-16 LE']])}<div id="fileOrder"></div></section><section class="panel"><div id="splitOptions" class="row">${select('splitMode', 'Разделить по', [['lines', 'Числу строк'], ['characters', 'Числу символов'], ['bytes', 'Размеру UTF-8 в байтах'], ['delimiter', 'Разделителю'], ['chapters', 'Главам / Markdown-заголовкам']])}${field('amount', 'Строк / символов / байтов в части', 'number', 100, 'min="1" max="10000000"')}${field('delimiter', 'Разделитель', 'text', '---')}</div><div id="mergeOptions" hidden>${field('separator', 'Разделитель между файлами (\\n — перенос)', 'text', '\\n\\n')}<label><input id="headings" type="checkbox"> Добавить названия исходных файлов</label></div><div class="actions"><button id="prepare" class="primary">Подготовить результат</button><button id="saveFiles" disabled>Скачать</button></div><p id="fileSummary" class="muted"></p><pre id="filePreview"></pre></section>`;
   let chosen = []; let results = [];
   function invalidate() { results = []; $('saveFiles').disabled = true; }
   function order() {

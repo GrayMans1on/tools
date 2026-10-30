@@ -56,11 +56,26 @@ export function fixText(text, selected) {
   return text;
 }
 export function splitText(text, mode, amount, delimiter = '') {
+  if (mode === 'chapters') {
+    return text ? text.split(/(?=^(?:#{1,6} +|Глава +\S|Chapter +\S))/gimu).filter(Boolean) : [''];
+  }
   if (mode === 'delimiter') {
     if (!delimiter) { throw new Error('Укажи разделитель.'); }
     return text.split(delimiter);
   }
   if (!Number.isInteger(amount) || amount < 1) { throw new Error('Размер части должен быть целым положительным числом.'); }
+  if (mode === 'bytes') {
+    const encoder = new TextEncoder(); const parts = []; let part = ''; let size = 0;
+    for (const char of text) {
+      const bytes = encoder.encode(char).length;
+      if (bytes > amount) { throw new Error('Размер части слишком мал для одного символа UTF-8.'); }
+      if (size + bytes > amount) { parts.push(part); part = ''; size = 0; }
+      part += char; size += bytes;
+      if (parts.length >= 10000) { throw new Error('Слишком много частей: увеличь размер.'); }
+    }
+    if (part || !parts.length) { parts.push(part); }
+    return parts;
+  }
   const items = mode === 'lines' ? text.split(/(?<=\n)/u) : [...text];
   const result = [];
   for (let i = 0; i < items.length; i += amount) {
