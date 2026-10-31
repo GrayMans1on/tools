@@ -1,8 +1,12 @@
+import {cleanTable} from '../release-core.js?v=20261031-v06';
 import { $, esc, field, files, select, action, status, download, copy, previewTable, persist, restore } from '../ui.js';
 import { parseDelimited, writeDelimited, convertLayout, diffJSON } from '../logic.js';
 
 export function layout(root) {
   root.innerHTML = `<div class="two"><section class="panel"><h2>Исходный текст</h2><textarea id="source" placeholder="Ghbdtn? vbh!"></textarea>${select('direction', 'Направление', [['en', 'Английская → русская'], ['ru', 'Русская → английская']])}<div class="actions"><button id="convert" class="primary">Преобразовать</button><button id="swap">Поменять местами</button></div></section><section class="panel"><h2>Результат</h2><textarea id="output" readonly></textarea><div class="actions"><button id="copy">Копировать</button><button id="save">Скачать TXT</button></div></section></div>`;
+  const fragments=document.createElement('section');fragments.className='panel';fragments.innerHTML='<h2>Исправить отдельные фрагменты</h2><p class="muted">Список кандидатов по выбранному направлению. Имена, код и обычные иностранные слова тоже могут попасть в список — отметь только нужное.</p><button id="findFragments">Найти кандидатов</button><div id="fragmentList" class="chips" style="margin-top:15px"></div><button id="applyFragments">Применить отмеченные к исходнику</button>';root.append(fragments);let matches=[];let fragmentSnapshot='';
+  $('findFragments').onclick=()=>{fragmentSnapshot=$('source').value;const expression=$('direction').value==='ru'?/[А-Яа-яЁё]+[?!.,;:]?/gu:/[A-Za-z]+[?!.,;:]?/g;matches=[...fragmentSnapshot.matchAll(expression)].slice(0,500).map(match=>({start:match.index,text:match[0],result:convertLayout(match[0],$('direction').value==='ru')}));$('fragmentList').innerHTML=matches.map((match,i)=>`<label class="chip"><input type="checkbox" data-fragment="${i}"> ${esc(match.text)} → ${esc(match.result)}</label>`).join('');};
+  $('applyFragments').onclick=()=>{if(fragmentSnapshot!==$('source').value){status('Текст изменён: обнови список кандидатов.',true);return;}const chosen=[...root.querySelectorAll('[data-fragment]:checked')].map(input=>matches[Number(input.dataset.fragment)]).sort((a,b)=>b.start-a.start);let text=fragmentSnapshot;for(const match of chosen){text=text.slice(0,match.start)+match.result+text.slice(match.start+match.text.length);}$('source').value=text;update();$('fragmentList').replaceChildren();};
   $('source').value = restore('layout', 'Ghbdtn? vbh!');
   function update() {
     $('output').value = convertLayout($('source').value, $('direction').value === 'ru');
@@ -44,7 +48,7 @@ export function json(root) {
     target.replaceChildren();
     const query = $('search').value.toLowerCase();
     let count = 0;
-    function visit(value, key, parent, path) {
+    function visit(value, key, parent, path, trail = []) {
       if (count > 3000) {
         return;
       }
@@ -59,10 +63,15 @@ export function json(root) {
       label.textContent = complex ? `${key}: ${Array.isArray(value) ? `Array (${value.length})` : `Object (${Object.keys(value).length})`}` : `${key}: ${serialized}`;
       label.title = path;
       node.append(label);
+      const snapshot=$('source').value;const editor=document.createElement('details');editor.className='json-editor';const caption=document.createElement('summary');caption.textContent='Редактировать значение';const input=document.createElement('textarea');input.className='code';input.value=JSON.stringify(value,null,2);const apply=document.createElement('button');apply.textContent='Применить JSON-значение';
+      function commit(next){if($('source').value!==snapshot){throw new Error('Исходник изменён: сначала обнови дерево.');}if(!trail.length){parsed=next;}else{const owner=trail.slice(0,-1).reduce((item,key)=>item[key],parsed);Object.defineProperty(owner,trail.at(-1),{value:next,enumerable:true,writable:true,configurable:true});}$('source').value=JSON.stringify(parsed,null,2);valid();}
+      apply.onclick=()=>{try{commit(JSON.parse(input.value));}catch(error){status(error.message,true);}};editor.append(caption,input,apply);
+      if(complex){const name=document.createElement('input');name.placeholder=Array.isArray(value)?'Для массива ключ не нужен':'Ключ нового поля';name.setAttribute('aria-label','Ключ нового поля');const initial=document.createElement('textarea');initial.placeholder='JSON нового значения';initial.value='null';const add=document.createElement('button');add.textContent=Array.isArray(value)?'Добавить элемент':'Добавить поле';add.onclick=()=>{try{const next=JSON.parse(JSON.stringify(value));const item=JSON.parse(initial.value);if(Array.isArray(next)){next.push(item);}else{const key=name.value;if(!key||Object.hasOwn(next,key)){throw new Error('Нужен новый непустой ключ.');}Object.defineProperty(next,key,{value:item,enumerable:true,writable:true,configurable:true});}commit(next);}catch(error){status(error.message,true);}};editor.append(name,initial,add);}
+      node.append(editor);
       if (complex) {
         node.open = Boolean(query) || path === '$';
         for (const [child, item] of Object.entries(value)) {
-          visit(item, child, node, `${path}[${JSON.stringify(child)}]`);
+          visit(item, child, node, `${path}[${JSON.stringify(child)}]`, [...trail, child]);
         }
       } else {
         node.style.padding = '5px 16px';
@@ -115,7 +124,7 @@ export function json(root) {
 
 export async function tables(root) {
   const {XLSX} = await import('../vendor/vendor.js');
-  root.innerHTML = `<section class="panel">${files('file', '.csv,.tsv,.json,.md,.txt,.xlsx,.xls', false)}<div class="row">${select('inputFormat', 'Исходный формат', ['CSV', 'TSV', 'JSON', 'Markdown', 'XLSX'])}${select('encoding', 'Кодировка файла', ['utf-8', 'windows-1251'])}${select('delimiter', 'Разделитель CSV', [[',', 'Запятая'], [';', 'Точка с запятой'], ['\t', 'Табуляция']])}${select('sheet', 'Лист XLSX', [['', 'Сначала загрузи XLSX']])}</div><label>Исходные данные<textarea id="source" class="code"></textarea></label><div class="row">${select('outputFormat', 'Результат', ['CSV', 'TSV', 'JSON', 'Markdown', 'XLSX'])}<label><input id="headers" type="checkbox" checked> Первая строка — заголовки JSON</label></div><div class="actions"><button id="convert" class="primary">Преобразовать</button><button id="save">Скачать</button><button id="copy">Копировать текст</button></div></section><section class="panel"><h2>Предпросмотр — первые 100 строк</h2><div id="table" class="table-wrap"></div><label>Текст результата<textarea id="output" class="code" readonly></textarea></label></section>`;
+  root.innerHTML = `<section class="panel">${files('file', '.csv,.tsv,.json,.md,.txt,.xlsx,.xls', false)}<div class="row">${select('inputFormat', 'Исходный формат', ['CSV', 'TSV', 'JSON', 'Markdown', 'XLSX'])}${select('encoding', 'Кодировка файла', ['utf-8', 'windows-1251'])}${select('delimiter', 'Разделитель CSV', [[',', 'Запятая'], [';', 'Точка с запятой'], ['\t', 'Табуляция']])}${select('sheet', 'Лист XLSX', [['', 'Сначала загрузи XLSX']])}</div><label>Исходные данные<textarea id="source" class="code"></textarea></label><div class="row">${select('outputFormat', 'Результат', ['CSV', 'TSV', 'JSON', 'Markdown', 'XLSX'])}<label><input id="headers" type="checkbox" checked> Первая строка — заголовки JSON</label></div><div class="actions"><button id="convert" class="primary">Преобразовать</button><button id="save">Скачать</button><button id="copy">Копировать текст</button></div></section><section class="panel"><h2>Очистка столбцов</h2>${field('cleanColumns','Столбцы: имена через запятую или #1, #2; пусто — все')}${select('cleanOperation','Операция',[['trim','Убрать лишние пробелы'],['number','Числа: пробелы и десятичная запятая'],['date','Даты DD.MM.YYYY → YYYY-MM-DD'],['fill','Заполнить пустые']])}${field('emptyValue','Значение для пустых ячеек')}<div class="actions"><button id="cleanTable">Применить очистку</button><button id="undoClean" disabled>Отменить очистку</button></div><p class="muted">Первая строка считается заголовком. Очистка чисел сохраняет ведущие нули. Нераспознанные числа и даты остаются без изменений.</p></section><section class="panel"><h2>Предпросмотр — первые 100 строк</h2><div id="table" class="table-wrap"></div><label>Текст результата<textarea id="output" class="code" readonly></textarea></label></section>`;
   $('source').value = 'Название,Количество,Код\nИконка,3,0012\nСпрайт,8,0042';
   let workbook;
   let rows = [];
@@ -169,6 +178,9 @@ export async function tables(root) {
     $('output').value = text;
     status(`Строк: ${rows.length}; столбцов: ${Math.max(...rows.map(row => row.length))}.`);
   }
+  let cleanBackup;
+  action('cleanTable',()=>{const input=parse();if(!input.length){throw new Error('Таблица пуста.');}const names=$('cleanColumns').value.split(',').map(value=>value.trim()).filter(Boolean);const columns=names.length?names.map(name=>{const index=/^#\d+$/.test(name)?Number(name.slice(1))-1:input[0].map(String).indexOf(name);if(index<0||index>=input[0].length){throw new Error(`Столбец не найден: ${name}`);}return index;}):input[0].map((_,i)=>i);cleanBackup={source:$('source').value,format:$('inputFormat').value};$('source').value=JSON.stringify(cleanTable(input,columns,$('cleanOperation').value,$('emptyValue').value));$('inputFormat').value='JSON';$('undoClean').disabled=false;convert();});
+  action('undoClean',()=>{if(cleanBackup){$('source').value=cleanBackup.source;$('inputFormat').value=cleanBackup.format;cleanBackup=null;$('undoClean').disabled=true;convert();}});
   action('convert', convert);
   action('save', () => { convert(); download(exported, `table.${{CSV: 'csv', TSV: 'tsv', JSON: 'json', Markdown: 'md', XLSX: 'xlsx'}[$('outputFormat').value]}`); });
   action('copy', () => { convert(); if ($('outputFormat').value === 'XLSX') { throw new Error('XLSX нужно скачать файлом.'); } return copy($('output').value); });

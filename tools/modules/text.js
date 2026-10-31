@@ -1,5 +1,6 @@
+import {installCheckProfiles} from '../check-profiles.js';
 import { $, esc, field, select, files, action, status, number, download, bundle, baseName, copy } from '../ui.js';
-import { textStats, checkRules, checkText, fixText, splitText, replaceText } from '../text-core.js?v=20261030-v051';
+import { textStats, checkRules, checkText, fixText, splitText, replaceText } from '../text-core.js?v=20261031-v06';
 
 export async function readText(file, encoding = 'utf-8') {
   if (file.size > 20 * 1024 * 1024) { throw new Error('Файл больше 20 МБ.'); }
@@ -116,12 +117,13 @@ export function textlab(root) {
 }
 export function textcheck(root) {
   root.innerHTML = inputPanel() + `<section class="panel"><h2>Проверки</h2><div class="chips">${checkRules.map(rule => `<label class="chip"><input type="checkbox" data-rule="${rule.id}" checked> ${rule.name}</label>`).join('')}</div><div class="row">${field('maxLength', 'Максимум символов (0 — без ограничения)', 'number', 0, 'min="0"')}${field('forbidden', 'Запрещённые слова через запятую')}</div><div class="actions"><button id="check" class="primary">Проверить</button><button id="fix">Исправить выбранные группы</button><button id="undoCheck" disabled>Отменить</button><button id="saveChecked">Скачать TXT</button></div><p class="muted">Техническая проверка и типографика. Смешанные алфавиты только подсвечиваются. Невидимые знаки иногда нужны: проверь каждое исправление. Орфография и грамматика не анализируются.</p><div id="issues"></div></section>`;
+  const customRules = installCheckProfiles(root);
   let previous; let issues = []; let checkedText;
   const selected = () => [...root.querySelectorAll('[data-rule]:checked')].map(input => input.dataset.rule);
   function run() {
     const text = $('text').value;
     if (text.length > 2e6) { status('До 2 млн символов.', true); return; }
-    checkedText = text; issues = checkText(text, selected());
+    checkedText = text; issues = [...checkText(text, selected()), ...customRules.check(text)].sort((a,b)=>a.index-b.index);
     const limit = number('maxLength');
     if (limit > 0 && [...text].length > limit) { issues.push({name: `Превышение длины: ${[...text].length} / ${limit}`, index: 0, text: '', replacement: null}); }
     for (const word of $('forbidden').value.split(',').map(value => value.trim()).filter(Boolean)) {
@@ -131,8 +133,8 @@ export function textcheck(root) {
     $('issues').innerHTML = `<p>Найдено: ${issues.length}${issues.length >= 2000 ? ' (первые 2000)' : ''}</p>` + issues.slice(0, 2000).map((issue, index) => `<div class="issue"><strong>${esc(issue.name)}</strong><small>Позиция ${issue.index + 1}</small><code>${esc(text.slice(Math.max(0, issue.index - 24), issue.index))}<mark>${esc(issue.text || '∅')}</mark>${esc(text.slice(issue.index + issue.text.length, issue.index + issue.text.length + 24))}</code>${issue.replacement !== null ? `<button data-fix="${index}">Исправить</button>` : ''}</div>`).join('');
   }
   function remember() { previous = $('text').value; $('undoCheck').disabled = false; }
-  $('check').onclick = run; importHandler(run);
-  $('fix').onclick = () => { remember(); $('text').value = fixText($('text').value, selected()); run(); };
+  $('check').onclick = () => { try { run(); } catch(error) { status(error.message,true); } }; importHandler(run);
+  $('fix').onclick = () => { try { remember(); $('text').value = customRules.fix(fixText($('text').value, selected())); run(); } catch(error) { status(error.message,true); } };
   $('undoCheck').onclick = () => { $('text').value = previous; $('undoCheck').disabled = true; run(); };
   $('issues').onclick = event => {
     const index = event.target.dataset.fix; if (index === undefined) { return; }

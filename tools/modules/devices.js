@@ -12,7 +12,7 @@ export function devices(root) {
     const panel = $('test');
     if (kind === 'keyboard') {
       const codes = ['Escape', ...Array.from({length: 12}, (_, i) => `F${i + 1}`), 'Backquote', ...'1234567890'.split('').map(n => `Digit${n}`), 'Minus', 'Equal', 'Backspace', 'Tab', ...'QWERTYUIOP'.split('').map(n => `Key${n}`), 'BracketLeft', 'BracketRight', 'Backslash', 'CapsLock', ...'ASDFGHJKL'.split('').map(n => `Key${n}`), 'Semicolon', 'Quote', 'Enter', 'ShiftLeft', ...'ZXCVBNM'.split('').map(n => `Key${n}`), 'Comma', 'Period', 'Slash', 'ShiftRight', 'ControlLeft', 'MetaLeft', 'AltLeft', 'Space', 'AltRight', 'ControlRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight', 'Insert', 'Delete', 'Home', 'End', 'PageUp', 'PageDown'];
-      panel.innerHTML = '<h2>Клавиатура</h2><p class="muted">Кликни сюда и нажимай клавиши. Tab и системные сочетания могут перехватываться браузером или ОС. Зелёный — уже проверена, тёмный — нажата.</p><div id="keyInfo" class="result">Ожидание ввода</div><div id="keys" class="key-grid"></div><pre id="keyHistory"></pre><button id="resetKeys">Сбросить</button>';
+      panel.innerHTML = '<h2>Клавиатура</h2><p class="muted">Кликни сюда и нажимай клавиши. Tab и системные сочетания могут перехватываться браузером или ОС. Ярко-зелёный — нажата сейчас; едва заметный зелёный — уже проверена и отпущена.</p><div id="keyInfo" class="result">Ожидание ввода</div><div id="keys" class="key-grid"></div><pre id="keyHistory"></pre><button id="resetKeys">Сбросить</button>';
       panel.tabIndex = 0; panel.focus(); const history = [];
       for (const code of codes) { const key = document.createElement('div'); key.className = 'key'; key.dataset.code = code; key.textContent = code.replace('Key', '').replace('Digit', ''); $('keys').append(key); }
       const find = code => [...$('keys').children].find(el => el.dataset.code === code);
@@ -25,17 +25,20 @@ export function devices(root) {
       }
       function up(event) { find(event.code)?.classList.remove('pressed'); }
       panel.addEventListener('keydown', down); panel.addEventListener('keyup', up);
+      const release = () => { panel.querySelectorAll('.pressed').forEach(key => key.classList.remove('pressed')); }; panel.addEventListener('focusout', release); window.addEventListener('blur', release); cleanups.push(() => window.removeEventListener('blur', release));
       button('resetKeys', 'Сбросить', () => { [...$('keys').children].forEach(el => { el.className = 'key'; }); history.length = 0; $('keyHistory').textContent = ''; panel.focus(); });
     }
     if (kind === 'mouse') {
-      panel.innerHTML = '<h2>Мышь</h2><div id="mouseArea" class="drop" tabindex="0" style="height:250px;display:grid;place-items:center">Нажимай кнопки и вращай колесо в этой области</div><pre id="mouseInfo"></pre><button id="resetMouse">Сбросить</button>';
+      panel.innerHTML = '<h2>Мышь</h2><div id="mouseArea" class="drop" tabindex="0" style="height:250px;display:grid;place-items:center">Нажимай кнопки и вращай колесо в этой области</div><div id="mouseButtons" class="chips"><span class="key" data-mouse="0">Левая</span><span class="key" data-mouse="1">Средняя</span><span class="key" data-mouse="2">Правая</span><span class="key" data-mouse="3">Назад</span><span class="key" data-mouse="4">Вперёд</span></div><p class="muted">Ярко-зелёный — нажато, бледный — проверено.</p><pre id="mouseInfo"></pre><button id="resetMouse">Сбросить</button>';
       let presses = {}; let wheels = 0; let doubleClicks = 0; let previous = 0; let interval = 0;
       function display() { $('mouseInfo').textContent = `Нажатия: ${JSON.stringify(presses)}\nКолесо: ${wheels}\nДвойные клики: ${doubleClicks}\nИнтервал последних нажатий: ${interval.toFixed(0)} мс`; }
-      $('mouseArea').addEventListener('pointerdown', event => { event.preventDefault(); presses[event.button] = (presses[event.button] || 0) + 1; interval = previous ? performance.now() - previous : 0; previous = performance.now(); display(); });
+      $('mouseArea').addEventListener('pointerdown', event => { event.preventDefault(); const indicator = panel.querySelector(`[data-mouse="${event.button}"]`); indicator?.classList.add('pressed', 'seen'); $('mouseArea').setPointerCapture(event.pointerId); presses[event.button] = (presses[event.button] || 0) + 1; interval = previous ? performance.now() - previous : 0; previous = performance.now(); display(); });
+      $('mouseArea').addEventListener('pointerup', event => { panel.querySelector(`[data-mouse="${event.button}"]`)?.classList.remove('pressed'); });
+      const releaseMouse = () => { panel.querySelectorAll('.pressed').forEach(key => key.classList.remove('pressed')); }; window.addEventListener('blur', releaseMouse); cleanups.push(() => window.removeEventListener('blur', releaseMouse));
       $('mouseArea').addEventListener('contextmenu', event => event.preventDefault());
       $('mouseArea').addEventListener('dblclick', () => { doubleClicks += 1; display(); });
       $('mouseArea').addEventListener('wheel', event => { event.preventDefault(); wheels += event.deltaY; display(); }, {passive: false});
-      button('resetMouse', '', () => { presses = {}; wheels = 0; doubleClicks = 0; previous = 0; display(); }); display();
+      button('resetMouse', '', () => { presses = {}; wheels = 0; doubleClicks = 0; previous = 0; panel.querySelectorAll('[data-mouse]').forEach(key => { key.className = 'key'; }); display(); }); display();
     }
     if (kind === 'microphone' || kind === 'camera') {
       const mic = kind === 'microphone';
@@ -119,7 +122,7 @@ export function devices(root) {
     }
     if (kind === 'gamepad') {
       panel.innerHTML = `<h2>Геймпад</h2><p class="muted">Подключи геймпад и нажми на нём кнопку, чтобы браузер обнаружил устройство.</p>${field('deadzone', 'Мёртвая зона', 'number', .1, 'min="0" max="0.9" step="0.01"')}<div id="gamepads"></div>`;
-      let frame;
+      let frame; const seen = new Set();
       function update() {
         const pads = [...navigator.getGamepads()].filter(Boolean); const target = $('gamepads'); target.replaceChildren();
         if (!pads.length) { target.textContent = 'Ожидание геймпада…'; }
@@ -130,7 +133,7 @@ export function devices(root) {
           const deadzone = Math.max(0, Math.min(.9, number('deadzone', .1)));
           axes.textContent = pad.axes.map((v, i) => `Ось ${i}: ${v.toFixed(4)} ${Math.abs(v) < deadzone ? '(мёртвая зона)' : ''}`).join('\n');
           const buttons = document.createElement('div'); buttons.className = 'chips';
-          pad.buttons.forEach((item, i) => { const el = document.createElement('span'); el.className = 'chip'; el.textContent = `${i}: ${item.value.toFixed(2)}`; if (item.pressed) { el.style.background = '#bfe6cc'; } buttons.append(el); });
+          pad.buttons.forEach((item, i) => { const el = document.createElement('span'); if(item.pressed){seen.add(`${pad.index}:${i}`);} el.className = `chip key${seen.has(`${pad.index}:${i}`)?' seen':''}${item.pressed?' pressed':''}`; el.textContent = `${i}: ${item.value.toFixed(2)}`; buttons.append(el); });
           card.append(title, axes, buttons); target.append(card);
         }
         frame = requestAnimationFrame(update);

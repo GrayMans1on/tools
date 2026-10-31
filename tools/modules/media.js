@@ -1,5 +1,7 @@
+import {fitImageBudget} from '../image-budget.js';
+import {crossfadeAudio, levelAudio} from '../release-core.js?v=20261031-v06';
 import { $, esc, field, select, files, action, status, number, canvas, toBlob, readImage, baseName, bundle, download, sleep, teardown } from '../ui.js';
-import { decodeAudio, encodeAudio, processAudio } from '../audio-core.js';
+import { decodeAudio, encodeAudio, processAudio } from '../audio-core.js?v=20261031-v06';
 import { parseDelimited, writeDelimited } from '../logic.js';
 
 function drawWave(buffer, element) {
@@ -16,7 +18,8 @@ function drawWave(buffer, element) {
   ctx.stroke();
 }
 export async function audio(root) {
-  root.innerHTML = `<section class="panel">${files('files', 'audio/*,.wav,.mp3,.ogg,.flac,.m4a,.aac')}<label>Файл для предпросмотра<select id="selected"></select></label><p id="batchNote" class="muted"></p><audio id="original" controls hidden style="width:100%"></audio><canvas id="wave"></canvas><p id="info" class="muted"></p></section><section class="panel"><div class="row">${field('gain', 'Громкость, dB', 'number', 0, 'min="-60" max="30" step="0.5"')}<label>Громкость<input id="gainRange" type="range" min="-60" max="30" step="0.5" value="0"></label>${select('format', 'Формат результата', [['wav', 'WAV · PCM 16 bit'], ['mp3', 'MP3 · 192 kbps']])}</div><div id="singleOptions"><div class="row">${field('start', 'Начало, с', 'number', 0, 'min="0" step="0.01"')}${field('end', 'Конец, с', 'number', 1, 'min="0" step="0.01"')}${field('fadeIn', 'Появление, с', 'number', 0, 'min="0" step="0.1"')}${field('fadeOut', 'Затухание, с', 'number', 0, 'min="0" step="0.1"')}</div><div class="row">${select('channel', 'Каналы', [['original', 'Сохранить'], ['mono', 'Моно: среднее каналов'], ['left', 'Только левый'], ['right', 'Только правый'], ['swap', 'Поменять левый / правый'], ['split', 'Экспортировать каналы отдельно']])}${field('tempo', 'Темп, ×', 'number', 1, 'min="0.5" max="2" step="0.05"')}${field('pitch', 'Высота, полутонов', 'number', 0, 'min="-12" max="12" step="1"')}</div></div><div class="actions"><button id="preview" class="primary">Прослушать результат</button><button id="export">Скачать результат</button><button id="cancel">Отмена партии</button></div><audio id="processed" controls hidden style="width:100%;margin-top:18px"></audio><p class="muted">Положительное усиление может вызвать клиппинг. Уровень проверяется до экспорта. Темп и высота изменяются независимо.</p></section>`;
+  root.innerHTML = `<section class="panel">${files('files', 'audio/*,.wav,.mp3,.ogg,.flac,.m4a,.aac')}<label>Файл для предпросмотра<select id="selected"></select></label><p id="batchNote" class="muted"></p><audio id="original" controls hidden style="width:100%"></audio><canvas id="wave"></canvas><p id="info" class="muted"></p></section><section class="panel"><div class="row">${field('gain', 'Громкость, dB', 'number', 0, 'min="-60" max="30" step="0.5"')}<label>Громкость<input id="gainRange" type="range" min="-60" max="30" step="0.5" value="0"></label>${select('format', 'Формат результата', [['wav', 'WAV · PCM 16 bit'], ['mp3', 'MP3 · 192 kbps']])}</div><div id="singleOptions"><label>Выравнивание громкости внутри файла: <output id="levelValue">0%</output><input id="level" type="range" min="0" max="100" value="0"></label><p class="muted">0% — исходная динамика; 100% — полное выравнивание среднего уровня активных окон 250 мс с плавными переходами. Тишина не усиливается; изменение усиления ограничено ±20 dB, пики защищены.</p><div class="row">${field('start', 'Начало, с', 'number', 0, 'min="0" step="0.01"')}${field('end', 'Конец, с', 'number', 1, 'min="0" step="0.01"')}${field('fadeIn', 'Появление, с', 'number', 0, 'min="0" step="0.1"')}${field('fadeOut', 'Затухание, с', 'number', 0, 'min="0" step="0.1"')}</div><div class="row">${select('channel', 'Каналы', [['original', 'Сохранить'], ['mono', 'Моно: среднее каналов'], ['left', 'Только левый'], ['right', 'Только правый'], ['swap', 'Поменять левый / правый'], ['split', 'Экспортировать каналы отдельно']])}${field('tempo', 'Темп, ×', 'number', 1, 'min="0.5" max="2" step="0.05"')}${field('pitch', 'Высота, полутонов', 'number', 0, 'min="-12" max="12" step="1"')}</div><details><summary>Склейка фрагментов этого файла</summary><label>Фрагменты по порядку: начало–конец, секунды<textarea id="joinRanges" placeholder="0-3
+5-8"></textarea></label>${field('crossfade', 'Перекрытие, с', 'number', .3, 'min="0" max="30" step="0.05"')}<div class="actions"><button id="previewJoin">Прослушать склейку</button><button id="exportJoin">Скачать склейку</button></div></details></div><div class="actions"><button id="preview" class="primary">Прослушать результат</button><button id="export">Скачать результат</button><button id="cancel">Отмена партии</button></div><audio id="processed" controls hidden style="width:100%;margin-top:18px"></audio><p class="muted">Положительное усиление может вызвать клиппинг. Уровень проверяется до экспорта. Темп и высота изменяются независимо.</p></section>`;
   let buffer; let activeFile; let originalURL; let processedURL; let cancel = false;
   async function load() {
     const chosen = [...$('files').files]; const file = chosen[Number($('selected').value) || 0];
@@ -52,8 +55,19 @@ export async function audio(root) {
     const start = number('start'); const end = number('end'); const tempo = number('tempo', 1); const pitch = number('pitch');
     if (start < 0 || end <= start || end > target.duration + .01) { throw new Error('Проверь границы фрагмента.'); }
     if (tempo < .5 || tempo > 2 || pitch < -12 || pitch > 12) { throw new Error('Темп: 0.5–2×; высота: −12…+12 полутонов.'); }
-    return {gain, start, end, tempo, pitch, fadeIn: number('fadeIn'), fadeOut: number('fadeOut'), channel: $('channel').value};
+    return {gain, start, end, tempo, pitch, fadeIn: number('fadeIn'), fadeOut: number('fadeOut'), channel: $('channel').value, level: number('level')};
   }
+  $('level').oninput = () => { $('levelValue').textContent = `${$('level').value}%`; };
+  async function joined() {
+    if (!buffer || $('files').files.length !== 1) { throw new Error('Для склейки выбери один исходный файл.'); }
+    const lines = $('joinRanges').value.trim().split('\n').filter(Boolean); if (lines.length < 2 || lines.length > 50) { throw new Error('Нужно 2–50 фрагментов.'); }
+    const overlap = number('crossfade'); if (overlap < 0 || overlap > 30) { throw new Error('Перекрытие 0–30 секунд.'); }
+    const parts = [];
+    for (const line of lines) { const match = /^\s*([\d.]+)\s*[-–]\s*([\d.]+)\s*$/.exec(line); if (!match) { throw new Error(`Проверь фрагмент: ${line}`); } const start = Number(match[1]); const end = Number(match[2]); if (start < 0 || end <= start || end > buffer.duration) { throw new Error(`Фрагмент вне файла: ${line}`); } const result = await processAudio(buffer, {...options(buffer), start, end, level: 0}); parts.push(result.channels); }
+    return levelAudio(crossfadeAudio(parts, buffer.sampleRate, overlap), buffer.sampleRate, number('level'));
+  }
+  action('previewJoin', async () => { const data = await joined(); if (processedURL) { URL.revokeObjectURL(processedURL); } processedURL = URL.createObjectURL(await encodeAudio(data, buffer.sampleRate, 'wav')); $('processed').src = processedURL; $('processed').hidden = false; status(`Склейка: ${(data[0].length / buffer.sampleRate).toFixed(2)} с.`); });
+  action('exportJoin', async () => { const data = await joined(); download(await encodeAudio(data, buffer.sampleRate, $('format').value), `joined.${$('format').value}`); });
   action('preview', async () => {
     if (!buffer) { throw new Error('Выбери аудиофайл.'); }
     status('Обработка…'); await sleep();
@@ -136,10 +150,10 @@ async function textPDF(text) {
 }
 export async function converter(root) {
   const vendor = await import('../vendor/vendor.js');
-  root.innerHTML = `<section class="panel"><div class="row">${select('family', 'Тип файлов', [['image', 'Изображения'], ['audio', 'Аудио'], ['document', 'Текстовые документы'], ['table', 'Таблицы']])}${select('format', 'Выходной формат', [])}</div>${files('files')}<p id="support" class="muted"></p><div id="imageOptions" class="row">${field('width', 'Ширина, 0 = исходная', 'number', 0, 'min="0" max="16384"')}${field('height', 'Высота, 0 = по пропорциям', 'number', 0, 'min="0" max="16384"')}${field('quality', 'Качество JPEG / WebP, %', 'number', 90, 'min="1" max="100"')}${field('background', 'Фон без прозрачности', 'color', '#ffffff')}</div><div class="actions"><button id="convert" class="primary">Преобразовать и скачать</button><button id="cancel">Отменить партию</button></div><pre id="report"></pre></section>`;
+  root.innerHTML = `<section class="panel"><div class="row">${select('family', 'Тип файлов', [['image', 'Изображения'], ['audio', 'Аудио'], ['document', 'Текстовые документы'], ['table', 'Таблицы']])}${select('format', 'Выходной формат', [])}</div>${files('files')}<p id="support" class="muted"></p><div id="imageOptions" class="row">${field('width', 'Ширина, 0 = исходная', 'number', 0, 'min="0" max="16384"')}${field('height', 'Высота, 0 = по пропорциям', 'number', 0, 'min="0" max="16384"')}${field('quality', 'Качество JPEG / WebP, %', 'number', 90, 'min="1" max="100"')}${field('background', 'Фон без прозрачности', 'color', '#ffffff')}${field('targetKB', 'Максимум КБ, 0 — без лимита (PNG/JPEG/WebP)', 'number', 0, 'min="0" max="100000"')}</div><div class="actions"><button id="convert" class="primary">Преобразовать и скачать</button><button id="cancel">Отменить партию</button></div><pre id="report"></pre></section>`;
   const formats = {image: ['png', 'jpeg', 'webp', 'bmp', 'gif', 'ico', 'pdf'], audio: ['wav', 'mp3'], document: ['txt', 'md', 'html', 'pdf'], table: ['csv', 'tsv', 'json', 'md', 'xlsx']};
   const descriptions = {
-    image: 'Вход: PNG, JPEG, WebP, BMP, GIF (первый кадр), SVG и ICO. GIF на выходе статический. ICO — до 256 px. BMP сохраняется без прозрачности.',
+    image: 'Для целевого размера качество и при необходимости разрешение уменьшаются автоматически. Вход: PNG, JPEG, WebP, BMP, GIF (первый кадр), SVG и ICO. GIF на выходе статический. ICO — до 256 px. BMP сохраняется без прозрачности.',
     audio: 'Вход: WAV, MP3, OGG, FLAC, M4A и другие форматы, которые декодирует твой браузер. Выход: WAV или MP3. Видео не обрабатывается.',
     document: 'Вход: TXT, MD, HTML, DOCX. Преобразуется текст документа. PDF формируется как страницы с текстом; исходная вёрстка DOCX не переносится. PDF на входе пока не поддерживается.',
     table: 'Вход: CSV (запятая), TSV, JSON-массив, XLSX/XLS. Для выбора разделителя и листа используй отдельный конвертер таблиц.'
@@ -167,6 +181,7 @@ export async function converter(root) {
           const requestedW = Math.floor(number('width')); const requestedH = Math.floor(number('height'));
           let width = requestedW || (requestedH ? Math.round(image.width * requestedH / image.height) : image.width);
           let height = requestedH || (requestedW ? Math.round(image.height * requestedW / image.width) : image.height);
+          if (number('targetKB') > 0 && !['png','jpeg','webp'].includes(format)) { image.close(); throw new Error('Целевой размер доступен для PNG, JPEG и WebP.'); }
           if (format === 'ico') { const ratio = Math.min(1, 256 / Math.max(width, height)); width = Math.max(1, Math.round(width * ratio)); height = Math.max(1, Math.round(height * ratio)); }
           const c = canvas(width, height); const ctx = c.getContext('2d');
           if (['jpeg', 'bmp', 'pdf'].includes(format)) { ctx.fillStyle = $('background').value; ctx.fillRect(0, 0, width, height); }
@@ -183,7 +198,8 @@ export async function converter(root) {
             const pdf = await vendor.PDFDocument.create(); const imagePDF = await pdf.embedPng(await (await toBlob(c)).arrayBuffer());
             pdf.addPage([width, height]).drawImage(imagePDF, {x: 0, y: 0, width, height}); blob = new Blob([await pdf.save()], {type: 'application/pdf'});
           } else {
-            blob = await toBlob(c, `image/${format}`, Math.max(.01, Math.min(1, number('quality', 90) / 100)));
+            const budget = number('targetKB');
+            blob = budget > 0 ? await fitImageBudget(c, `image/${format}`, Math.floor(budget * 1024), Math.max(.04, Math.min(1, number('quality', 90) / 100))) : await toBlob(c, `image/${format}`, Math.max(.01, Math.min(1, number('quality', 90) / 100))); 
             if (blob.type !== `image/${format}`) { throw new Error(`Браузер не кодирует ${format.toUpperCase()}.`); }
           }
         } else if (family === 'audio') {

@@ -1,83 +1,49 @@
-import { $, esc, field, select, files, action, status, canvas, toBlob, download, bundle, readImage, baseName, number, sleep, copy } from '../ui.js';
+import { $, esc, field, select, files, action, status, canvas, toBlob, download, bundle, readImage, baseName, number, sleep, copy, teardown } from '../ui.js';
 
 export async function palette(root) {
-  const {quantize, applyPalette} = await import('../vendor/vendor.js');
-  root.innerHTML = `<section class="panel">${files('files', 'image/*,.ico')}<div class="row">${field('colors', 'Количество цветов', 'number', 8, 'min="2" max="64"')}${select('mode', 'Несколько изображений', [['combined', 'Общая палитра'], ['separate', 'Отдельные палитры']])}</div><div class="actions"><button id="extract" class="primary">Извлечь палитру</button><button id="save">Скачать палитры</button></div><p class="muted">Прозрачные пиксели исключаются. Анализируется уменьшенная копия; исходники сохраняются без изменений.</p></section><div id="palettes"></div>`;
-  let results = [];
-  async function samples(file) {
-    const bitmap = await readImage(file);
-    const ratio = Math.min(1, 240 / Math.max(bitmap.width, bitmap.height));
-    const c = canvas(Math.max(1, Math.round(bitmap.width * ratio)), Math.max(1, Math.round(bitmap.height * ratio)));
-    c.getContext('2d').drawImage(bitmap, 0, 0, c.width, c.height);
-    bitmap.close();
-    const pixels = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-    const opaque = [];
-    for (let i = 0; i < pixels.length; i += 4) {
-      if (pixels[i + 3] > 127) { opaque.push(pixels[i], pixels[i + 1], pixels[i + 2], 255); }
-    }
-    return opaque;
-  }
-  action('extract', async () => {
-    const chosen = [...$('files').files];
-    if (!chosen.length) { throw new Error('Выбери изображения.'); }
-    const count = Math.max(2, Math.min(64, Math.round(number('colors', 8))));
-    results = [];
-    $('palettes').replaceChildren();
-    const groups = [];
-    let combined = [];
-    for (const [i, file] of chosen.entries()) {
-      status(`Чтение ${i + 1}/${chosen.length}: ${file.name}`);
-      const data = await samples(file);
-      if ($('mode').value === 'separate') { groups.push({name: file.name, data}); }
-      else {
-        const step = Math.max(1, Math.ceil(data.length / 4 / Math.max(1, Math.floor(250000 / chosen.length)))) * 4;
-        for (let j = 0; j < data.length; j += step) { combined.push(...data.slice(j, j + 4)); }
-      }
+  const {quantize} = await import('../vendor/vendor.js');
+  const {paletteGroups} = await import('../release-core.js?v=20261031-v06');
+  root.innerHTML = `<section class="panel">${files('files', 'image/*,.ico')}<div class="row">${field('colors', 'Количество цветов', 'number', 8, 'min="2" max="64"')}${select('mode', 'Несколько изображений', [['combined', 'Общая палитра'], ['separate', 'Отдельные палитры']])}</div><div class="actions"><button id="extract" class="primary">Извлечь палитру</button><button id="save">Скачать палитры</button></div><p class="muted">Ширина сегмента — доля цвета с объединёнными оттенками. Наведи или нажми Tab: вертикальные полосы покажут точный цвет и ближайшие исходные оттенки. Анализ до 1 млн пикселей на файл без сглаживания; у больших изображений доли приблизительные. Прозрачность исключается.</p></section><div id="palettes"></div>`;
+  let results=[];
+  action('extract', async()=>{
+    const chosen=[...$('files').files]; if(!chosen.length) { throw new Error('Выбери изображения.'); }
+    const count=Math.max(2,Math.min(64,Math.round(number('colors',8)))); const groups=[]; const combined=[]; results=[]; $('palettes').replaceChildren();
+    for(const file of chosen) {
+      const image=await readImage(file); const ratio=Math.min(1,Math.sqrt(1e6/(image.width*image.height)));
+      const c=canvas(Math.max(1,Math.round(image.width*ratio)),Math.max(1,Math.round(image.height*ratio))); const ctx=c.getContext('2d'); ctx.imageSmoothingEnabled=false; ctx.drawImage(image,0,0,c.width,c.height); image.close();
+      const rgba=ctx.getImageData(0,0,c.width,c.height).data; const data=[];
+      const step=$('mode').value==='combined'?Math.max(1,Math.ceil(rgba.length/4/Math.max(1,1e6/chosen.length)))*4:4;
+      for(let i=0;i<rgba.length;i+=step) { if(rgba[i+3]>127) { data.push(rgba[i],rgba[i+1],rgba[i+2],255); } }
+      if($('mode').value==='separate') { groups.push({name:file.name,data}); } else { combined.push(data); }
       await sleep();
     }
-    if ($('mode').value === 'combined') { groups.push({name: 'Общая палитра', data: combined}); }
-    for (const group of groups) {
-      if (!group.data.length) { status(`${group.name}: нет непрозрачных пикселей.`, true); continue; }
-      const data = new Uint8Array(group.data);
-      const colors = quantize(data, count);
-      const indices = applyPalette(data, colors);
-      const hits = new Array(colors.length).fill(0);
-      for (const index of indices) { hits[index] += 1; }
-      const palette = colors.map((rgb, index) => ({rgb, hex: `#${rgb.slice(0, 3).map(v => v.toString(16).padStart(2, '0')).join('')}`, percent: hits[index] * 100 / indices.length})).sort((a, b) => b.percent - a.percent);
-      results.push({name: group.name, colors: palette});
-      const panel = document.createElement('section');
-      panel.className = 'panel';
-      const title = document.createElement('h2'); title.textContent = group.name; panel.append(title);
-      const grid = document.createElement('div'); grid.className = 'grid';
-      for (const item of palette) {
-        const tile = document.createElement('button'); tile.className = 'tile';
-        tile.innerHTML = `<div class="swatch" style="background:${item.hex}"></div><strong>${item.hex.toUpperCase()}</strong><small>RGB ${item.rgb.slice(0, 3).join(', ')} · ${item.percent.toFixed(1)}%</small>`;
-        tile.addEventListener('click', () => { copy(item.hex).catch(error => status(error.message, true)); });
-        grid.append(tile);
+    if($('mode').value==='combined') { groups.push({name:'Общая палитра',data:combined.flat()}); }
+    for(const group of groups) {
+      if(!group.data.length) { continue; }
+      const data=new Uint8Array(group.data); const colors=paletteGroups(data,quantize(data,count)); results.push({name:group.name,colors});
+      const panel=document.createElement('section'); panel.className='panel'; const title=document.createElement('h2'); title.textContent=group.name;
+      const strip=document.createElement('div'); strip.className='palette-strip'; const info=document.createElement('div'); info.className='palette-info'; info.setAttribute('aria-live','polite');
+      for(const item of colors) {
+        const button=document.createElement('button'); button.className='palette-bucket'; button.style.width=`${item.percent}%`; button.style.background=item.hex; button.title=`${item.hex.toUpperCase()} · ${item.percent.toFixed(2)}%`; button.setAttribute('aria-label',button.title);
+        let offset=0; const gradient=item.sources.map(source=>{ const start=offset; offset+=source.count/item.total*100; return `${source.hex} ${start}% ${offset}%`; }).join(',');
+        function show() {
+          button.style.background=`linear-gradient(to bottom,${gradient})`;
+          info.innerHTML=`<strong>${item.hex.toUpperCase()} · ${item.percent.toFixed(2)}% палитры</strong><p>Точно этот цвет: ${(item.exact/item.total*100).toFixed(2)}% сегмента; ближайшие оттенки: ${((1-item.exact/item.total)*100).toFixed(2)}%.</p><div class="chips">${item.sources.slice(0,80).map(source=>`<span class="chip"><i style="display:inline-block;width:12px;height:12px;background:${source.hex}"></i> ${source.hex.toUpperCase()} · ${(source.count/item.total*100).toFixed(2)}%</span>`).join('')}</div>${item.sources.length>80?`<small>Ещё оттенков: ${item.sources.length-80}. Полный состав — в JSON.</small>`:''}`;
+        }
+        button.onmouseenter=show; button.onfocus=show; button.onmouseleave=()=>{button.style.background=item.hex;}; button.onblur=()=>{button.style.background=item.hex;}; button.onclick=()=>{show();copy(item.hex).catch(error=>status(error.message,true));}; strip.append(button);
       }
-      panel.append(grid); $('palettes').append(panel);
+      panel.append(title,strip,info); $('palettes').append(panel);
     }
-    status(`Готово. Палитр: ${results.length}. Нажми на цвет, чтобы скопировать HEX.`);
+    status(`Палитр: ${results.length}. Цвета объединяются с ближайшим представителем в OKLab.`);
   });
-  action('save', async () => {
-    if (!results.length) { throw new Error('Сначала извлеки палитру.'); }
-    const items = [];
-    for (const result of results) {
-      const c = canvas(800, 140);
-      const ctx = c.getContext('2d');
-      result.colors.forEach((color, index) => {
-        const x = index * 800 / result.colors.length;
-        ctx.fillStyle = color.hex; ctx.fillRect(x, 0, 800 / result.colors.length + 1, 100);
-      });
-      ctx.fillStyle = '#fff'; ctx.fillRect(0, 100, 800, 40);
-      ctx.fillStyle = '#303646'; ctx.font = '14px sans-serif'; ctx.fillText(result.name, 12, 125);
-      const base = baseName(result.name);
-      items.push({name: `${base}.png`, blob: await toBlob(c)});
-      items.push({name: `${base}.json`, blob: new Blob([JSON.stringify(result, null, 2)], {type: 'application/json'})});
-      const gpl = `GIMP Palette\nName: ${result.name}\nColumns: ${result.colors.length}\n#\n${result.colors.map(item => `${item.rgb.slice(0, 3).join(' ')}\t${item.hex}`).join('\n')}`;
-      items.push({name: `${base}.gpl`, blob: new Blob([gpl])});
+  action('save',async()=>{
+    if(!results.length) { throw new Error('Сначала извлеки палитру.'); } const items=[];
+    for(const result of results) {
+      const c=canvas(1200,160);const ctx=c.getContext('2d');let x=0;
+      for(const item of result.colors) {const width=item.percent*12;ctx.fillStyle=item.hex;ctx.fillRect(x,0,width+1,160);x+=width;}
+      const base=baseName(result.name);items.push({name:`${base}.png`,blob:await toBlob(c)},{name:`${base}.json`,blob:new Blob([JSON.stringify(result,null,2)],{type:'application/json'})},{name:`${base}.gpl`,blob:new Blob([`GIMP Palette\nName: ${result.name}\n#\n${result.colors.map(item=>`${item.rgb.join(' ')}\t${item.hex}`).join('\n')}`])});
     }
-    await bundle(items, 'palettes.zip');
+    await bundle(items,'palettes.zip');
   });
 }
 
@@ -102,7 +68,7 @@ const segmentLines = {
   k: [20, 162, 44, 106], m: [50, 106, 50, 164], l: [80, 162, 56, 106]
 };
 export function segments(root) {
-  root.innerHTML = `<div class="two"><section class="panel"><label>Текст<textarea id="text">GRAYMANSION\n2026</textarea></label><div class="row">${select('style', 'Конструкция', [['9', '9 сегментов'], ['14', 'Расширенная панель']])}${field('size', 'Высота символа, px', 'number', 100, 'min="24" max="400"')}${field('thickness', 'Толщина сегмента', 'number', 9, 'min="2" max="20"')}${field('gap', 'Между символами', 'number', 12, 'min="0" max="100"')}</div><div class="row">${field('active', 'Активный цвет', 'color', '#91f7bf')}${field('inactive', 'Неактивный цвет', 'color', '#253b31')}${field('background', 'Фон', 'color', '#101a15')}</div><div class="row"><label><input id="glow" type="checkbox" checked> Свечение</label><label><input id="transparent" type="checkbox"> Прозрачный фон</label></div><div class="actions"><button id="render" class="primary">Обновить</button><button id="save">Скачать PNG</button><button id="svg">Скачать SVG</button></div><p class="muted">Расширенная панель лучше передаёт кириллицу. В режиме 9 сегментов сложные буквы стилизованы приблизительно.</p></section><section class="panel checker preview-wrap"><canvas id="preview"></canvas></section></div><section class="panel"><h2>Собственный символ</h2><div class="row">${field('char', 'Символ', 'text', 'А', 'maxlength="1"')}${field('mask', 'Активные сегменты: a–m', 'text', 'abcefg')}</div><div class="chips" id="segmentKeys"></div><div class="actions"><button id="custom">Применить к символу</button></div></section>`;
+  root.innerHTML = `<div class="two"><section class="panel"><label>Текст<textarea id="text">GRAYMANSION\n2026</textarea></label><div class="row">${select('style', 'Конструкция', [['9', '9 сегментов'], ['14', 'Расширенная панель']])}${field('size', 'Высота символа, px', 'number', 100, 'min="24" max="400"')}${field('thickness', 'Толщина сегмента', 'number', 9, 'min="2" max="20"')}${field('gap', 'Между символами', 'number', 12, 'min="0" max="100"')}</div><div class="row">${field('active', 'Активный цвет', 'color', '#91f7bf')}${field('inactive', 'Неактивный цвет', 'color', '#253b31')}${field('background', 'Фон', 'color', '#101a15')}</div><div class="row">${select('faultMode', 'Неисправность панели', [['none','Нет'],['dim','Тусклые'],['off','Не горят'],['stuck','Постоянно горят'],['flicker','Мерцают']])}${field('faultKeys', 'Сегменты с неисправностью (a–m)', 'text', 'abg')}</div><div class="row"><label><input id="glow" type="checkbox" checked> Свечение</label><label><input id="transparent" type="checkbox"> Прозрачный фон</label></div><div class="actions"><button id="render" class="primary">Обновить</button><button id="save">Скачать PNG</button><button id="svg">Скачать SVG</button></div><p class="muted">Расширенная панель лучше передаёт кириллицу. В режиме 9 сегментов сложные буквы стилизованы приблизительно.</p></section><section class="panel checker preview-wrap"><canvas id="preview"></canvas></section></div><section class="panel"><h2>Собственный символ</h2><div class="row">${field('char', 'Символ', 'text', 'А', 'maxlength="1"')}${field('mask', 'Активные сегменты: a–m', 'text', 'abcefg')}</div><div class="chips" id="segmentKeys"></div><div class="actions"><button id="custom">Применить к символу</button></div></section>`;
   const custom = {};
   for (const key of Object.keys(segmentLines)) {
     const button = document.createElement('button'); button.textContent = key;
@@ -133,15 +99,20 @@ export function segments(root) {
         const ox = 16 + col * (100 * unit + gap); const oy = 14 + row * (size + 20);
         for (const [key, coords] of Object.entries(segmentLines)) {
           if (!allowed.includes(key) || char === ' ') { continue; }
-          const on = mask.includes(key);
+          const fault = $('faultKeys').value.includes(key); const mode = $('faultMode').value;
+          let on = mask.includes(key);
+          if (fault && mode === 'off') { on = false; }
+          if (fault && mode === 'stuck') { on = true; }
+          if (fault && mode === 'flicker' && Math.sin(performance.now() / 75 + col * 7 + row * 11 + key.charCodeAt(0)) < .1) { on = false; }
+          ctx.globalAlpha = fault && mode === 'dim' && on ? .22 : 1;
           const [x1, y1, x2, y2] = coords.map((v, i) => v * unit + (i % 2 ? oy : ox));
           ctx.lineWidth = thickness * unit; ctx.lineCap = 'butt'; ctx.strokeStyle = on ? active : inactive;
           ctx.shadowColor = active; ctx.shadowBlur = on && $('glow').checked ? 12 * unit : 0;
           ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-          shapes.push(`<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${on ? active : inactive}" stroke-width="${thickness * unit}"/>`);
+          shapes.push(`<path d="M${x1} ${y1}L${x2} ${y2}" stroke="${on ? active : inactive}" stroke-width="${thickness * unit}" opacity="${ctx.globalAlpha}"/>`);
         }
         if (char === '.' || char === ':') {
-          ctx.shadowBlur = 0; ctx.fillStyle = active;
+          ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.fillStyle = active;
           for (const cy of char === ':' ? [60, 125] : [170]) {
             ctx.fillRect(ox + 45 * unit, oy + cy * unit, 10 * unit, 10 * unit);
             shapes.push(`<rect x="${ox + 45 * unit}" y="${oy + cy * unit}" width="${10 * unit}" height="${10 * unit}" fill="${active}"/>`);
@@ -150,19 +121,22 @@ export function segments(root) {
       }
     }
     svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${transparent ? '' : `<rect width="100%" height="100%" fill="${bg}"/>`}${shapes.join('')}</svg>`;
-    status('PNG содержит свечение; SVG сохраняет чистую геометрию сегментов.');
+    ctx.globalAlpha = 1;
+    status('PNG и SVG сохраняют текущий кадр. Мерцание видно в предпросмотре.');
   }
   action('render', render);
   action('save', async () => { render(); download(await toBlob($('preview')), 'segment-text.png'); });
   action('svg', () => { render(); download(new Blob([svg], {type: 'image/svg+xml'}), 'segment-text.svg'); });
   action('custom', () => { custom[$('char').value.toUpperCase()] = $('mask').value; render(); });
   root.addEventListener('change', () => { try { render(); } catch (error) { status(error.message, true); } });
+  const faultTimer = setInterval(() => { if ($('faultMode').value === 'flicker') { try { render(); } catch (error) { status(error.message, true); } } }, 120);
+  teardown(() => clearInterval(faultTimer));
   render();
 }
 
 export async function icons(root) {
   const {encodeIco, decodeIco} = await import('../vendor/vendor.js');
-  root.innerHTML = `<section class="panel">${files('file', '.png,.ico,image/png,image/x-icon', false)}<div class="row">${field('sizes', 'Размеры PNG через запятую', 'text', '1024,512,256,128,64,48,32,16')}${field('padding', 'Поля, %', 'number', 0, 'min="0" max="40"')}${select('sampling', 'Масштабирование', [['smooth', 'Плавное'], ['nearest', 'Без сглаживания']])}</div><div class="actions"><button id="previewButton" class="primary">Показать набор</button><button id="export">Скачать PNG + ICO</button></div><p class="muted">ICO включает размеры до 256 px. Более крупные варианты сохраняются в PNG.</p></section><section class="panel"><h2>Размерный ряд</h2><div id="sizesPreview" class="grid"></div><div id="icoFrames" class="muted"></div></section><section class="panel"><h2>Иконка в контексте — 20 вариантов</h2><div id="contexts" class="grid"></div></section>`;
+  root.innerHTML = `<section class="panel">${files('file', '.png,.ico,image/png,image/x-icon', false)}<div class="row">${field('sizes', 'Размеры PNG через запятую', 'text', '1024,512,256,128,64,48,32,16')}${field('padding', 'Поля, %', 'number', 0, 'min="0" max="40"')}${select('sampling', 'Масштабирование', [['smooth', 'Плавное'], ['nearest', 'Без сглаживания']])}</div><div class="actions"><button id="previewButton" class="primary">Показать набор</button><button id="export">Скачать PNG + ICO</button></div><p class="muted">ICO включает размеры до 256 px. Более крупные варианты сохраняются в PNG.</p></section><section class="panel"><h2>Читаемость в реальном размере</h2><div id="readability" class="readability-grid"></div><h2 style="margin-top:20px">Размерный ряд</h2><div id="sizesPreview" class="grid"></div><div id="icoFrames" class="muted"></div></section><section class="panel"><h2>Иконка в контексте — 20 вариантов</h2><div id="contexts" class="grid"></div></section>`;
   let bitmap;
   let iconURL;
   let outputs = [];
@@ -196,6 +170,8 @@ export async function icons(root) {
     }
     if (iconURL) { URL.revokeObjectURL(iconURL); }
     iconURL = URL.createObjectURL(await toBlob(make(256)));
+    $('readability').replaceChildren();
+    for (const background of ['light','dark','busy']) { const row = document.createElement('div'); row.className = `icon-readability ${background}`; for (const size of [16,20,24,32,48]) { const item = document.createElement('div'); const image = document.createElement('img'); image.src = iconURL; image.style.width = `${size}px`; image.style.height = `${size}px`; const label = document.createElement('small'); label.textContent = `${size} px`; item.append(image,label); row.append(item); } $('readability').append(row); }
     $('contexts').replaceChildren();
     const icon = `<img src="${iconURL}" alt="Предпросмотр иконки">`;
     const neighbors = '<i class="app-dot a"></i><i class="app-dot b"></i>';

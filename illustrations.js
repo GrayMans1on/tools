@@ -54,6 +54,9 @@ function qrPattern(x, y, cell = 3) {
 }
 
 const pictures = {
+  ascii: () => windowFrame(38, 33, 245, 110) + [0,1,2,3,4].map(i => text(60, 70+i*14, ['··::++**##@@','··::++**##@@','··::++**##@@','··::++**##@@','··::++**##@@'][i], 12, ['#a6b3ca','#94a5c0','#7f91ac','#6a7d98','#586c88'][i], 'font-family="monospace"')).join('') + text(239, 108, 'Aa', 30, ink, 'text-anchor="middle"'),
+  markdown: () => windowFrame(31,36,258,103) + line(155,53,155,136,'#dce1ec',1) + text(46,77,'# Текст',14,ink,'font-family="monospace"') + text(46,101,'**мысль**',12,'#8da696','font-family="monospace"') + text(173,81,'Текст',22,ink,'font-weight="600"') + text(173,108,'мысль',14,'#8da696','font-weight="600"'),
+
   textfiles: () => sheet(49, 46, 'TXT') + arrow(131, 86) + [0,1,2].map(i => sheet(199 + i * 8, 38 + i * 12, '0' + (i + 1), '#9aa9c4')).reverse().join(''),
   unicode: () => rect(40, 44, 88, 83, paper, 7, '#bac3d7') + text(84, 100, 'Ж', 43, ink, 'text-anchor="middle"') + arrow(144, 85) + text(242, 75, 'U+0416', 17, ink, 'text-anchor="middle"') + text(242, 100, 'D0 96', 12, '#8a97af', 'text-anchor="middle"') + text(242, 122, 'CYRILLIC', 8, '#939db1', 'text-anchor="middle" letter-spacing="1"'),
   symbols: () => [0,1,2,3,4,5].map(i => rect(66 + i % 3 * 66, 34 + Math.floor(i / 3) * 57, 56, 48, paper, 5, '#c0c8da') + text(94 + i % 3 * 66, 67 + Math.floor(i / 3) * 57, ['→','∞','∑','♫','⌘','±'][i], 26, i === 1 ? '#8aa593' : ink, 'text-anchor="middle"')).join(''),

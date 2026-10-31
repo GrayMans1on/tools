@@ -80,11 +80,11 @@
   :focus-visible { outline: 3px solid #5d657b; outline-offset: 4px; }
   @media (max-width: 520px) { h1 { font-size: 27px; } .drop { padding: 28px 12px; } }
 </style>
-</head>
+<style>#resizeMode{font:inherit;width:100%;border:1px solid #dce1eb;border-radius:8px;padding:9px 12px;margin:6px 0 12px;background:#fafbfe;color:#606a86}</style></head>
 <body>
 <main>
   <div class="heading">
-    <div><h1>Pixel Upscaler</h1><p>Пакетное увеличение пиксель-арта без размытия. Всё обрабатывается локально в браузере.</p></div>
+    <div><h1>Pixel Upscaler</h1><p>Увеличение и обратное уменьшение пиксель-арта без размытия. Всё обрабатывается локально в браузере.</p></div>
     <div class="chip">1–100× · PNG · ZIP</div>
   </div>
   <section class="panel">
@@ -99,11 +99,11 @@
   <section class="panel">
     <div class="settings">
       <div class="range-wrap">
-        <label for="scaleRange">Масштаб</label>
+        <label for="resizeMode">Режим</label><select id="resizeMode"><option value="up">Увеличить</option><option value="down">Обратное уменьшение</option></select><label for="scaleRange">Масштаб</label>
         <input id="scaleRange" type="range" min="1" max="100" value="8" step="1">
         <div class="range-label"><span>1×</span><span>50×</span><span>100×</span></div>
       </div>
-      <div><label for="scaleNumber">Множитель</label><input id="scaleNumber" type="number" min="1" max="100" value="8" step="1"></div>
+      <div><label for="scaleNumber">Множитель / делитель</label><input id="scaleNumber" type="number" min="1" max="100" value="8" step="1"></div>
     </div>
     <p class="warn">Пиксели не сглаживаются. Для защиты памяти браузера одно итоговое изображение ограничено 100 млн пикселей и стороной до 16 384 px.</p>
   </section>
@@ -145,8 +145,9 @@ function escapeFileBase(filename) {
 }
 
 function sizeInfo(entry) {
-  const width = entry.width * scale;
-  const height = entry.height * scale;
+  const down = document.getElementById('resizeMode').value === 'down';
+  const width = down ? Math.max(1, Math.floor(entry.width / scale)) : entry.width * scale;
+  const height = down ? Math.max(1, Math.floor(entry.height / scale)) : entry.height * scale;
   const tooLarge = width > MAX_SIDE || height > MAX_SIDE || width * height > MAX_PIXELS;
   return {width, height, tooLarge};
 }
@@ -203,6 +204,7 @@ function refresh() {
   downloadButton.textContent = entries.length > 1 ? `Скачать ZIP (${entries.length} PNG)` : 'Скачать PNG';
   clearButton.disabled = busy || entries.length === 0;
   picker.disabled = busy;
+  document.getElementById('resizeMode').disabled = busy;
   scaleRange.disabled = busy;
   scaleNumber.disabled = busy;
   if (!busy) {
@@ -292,6 +294,7 @@ window.addEventListener('dragover', event => {
 window.addEventListener('drop', event => {
   event.preventDefault();
 });
+document.getElementById('resizeMode').addEventListener('change', refresh);
 scaleRange.addEventListener('input', () => {
   setScale(scaleRange.value);
 });
@@ -322,6 +325,7 @@ async function upscale(entry) {
   if (target.tooLarge) {
     throw new Error(`Слишком большой результат: ${entry.file.name} (${target.width}×${target.height}).`);
   }
+  if (document.getElementById('resizeMode').value === 'down' && (entry.width % scale || entry.height % scale)) { throw new Error(`Размер ${entry.file.name} должен делиться на ${scale} без остатка.`); }
   const bitmap = await createImageBitmap(entry.file);
   try {
     const canvas = document.createElement('canvas');
@@ -453,7 +457,7 @@ async function exportAll() {
       status.textContent = `Обработка ${i + 1}/${entries.length}: ${entry.file.name}`;
       await new Promise(resolve => window.setTimeout(resolve, 10));
       const blob = await upscale(entry);
-      const base = `${escapeFileBase(entry.file.name)}_NN_x${scale}`;
+      const base = `${escapeFileBase(entry.file.name)}_NN_${document.getElementById('resizeMode').value === 'down' ? 'div' : 'x'}${scale}`;
       let name = `${base}.png`;
       let suffix = 2;
       while (names.has(name.toLowerCase())) {
@@ -469,10 +473,10 @@ async function exportAll() {
     } else {
       status.textContent = 'Упаковка PNG в ZIP…';
       const archive = await createZip(results);
-      makeDownload(archive, `PixelNearest_${results.length}_files_x${scale}.zip`);
+      makeDownload(archive, `PixelNearest_${results.length}_files_${document.getElementById('resizeMode').value === 'down' ? 'div' : 'x'}${scale}.zip`);
     }
     progressFill.style.width = '100%';
-    status.textContent = `Готово: ${results.length} PNG, масштаб ${scale}×. Проверь папку «Загрузки».`;
+    status.textContent = `Готово: ${results.length} PNG, ${document.getElementById('resizeMode').value === 'down' ? 'уменьшение в' : 'масштаб'} ${scale}×. Проверь папку «Загрузки».`;
   } catch (error) {
     status.textContent = `Ошибка: ${error.message || error}`;
     console.error(error);

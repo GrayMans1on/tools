@@ -68,3 +68,36 @@ Eleven additional tools bring the catalog to 27 entries. Sidebar tool icons have
 Additional vendor bundle: `fonts.js` (OpenType.js). Emoji data and Unicode name shards are self-hosted in `tools/data/`. Rebuild the font bundle with `vendor-src/build.sh` alongside the existing vendor bundles. See `tools/vendor/THIRD_PARTY_NOTICES.txt`.
 
 Data can be regenerated with `python3 vendor-src/build-data.py` after `npm ci` in `vendor-src`; Unicode generation requires Python's Unicode 14.0.0 database. Before replacing the current whiteboard, an additional recoverable previous-board copy is retained in IndexedDB.
+
+## Version 0.6 — selected refinements
+
+Catalog: 28 tools. Text splitting/merging is hidden from navigation and routing; its source is retained for later restoration. New ASCII image generator exports TXT, colored HTML and PNG. New Markdown editor has live sanitized preview, formatting toolbar, local draft/previous draft recovery, embedded local pictures, MD/HTML export and keyboard shortcuts. External images are disabled in its preview/export; HTML is sanitized with DOMPurify and a restrictive content policy. Markdown documents are limited to 2 million characters.
+
+Selected improvements:
+
+- Pixel Upscaler: inverse integer nearest-neighbor reduction; dimensions must divide evenly by the chosen factor.
+- Palette: a single proportional strip. Representatives are actual sampled source colors; shades are assigned to nearest representatives in OKLab. Hover/focus/click reveals a vertical split of exact and merged source shades and percentages. Large inputs use nearest-neighbor sampling; counts describe sampled opaque pixels, not an exact full-resolution histogram.
+- Converter: target size for PNG/JPEG/WebP, bounded quality search and resolution reduction when needed. Other output families retain previous behavior.
+- Segment display: selected segments can be dim, off, stuck on or flickering. Flicker is live in preview; PNG/SVG export a still frame.
+- JSON: edit values/subtrees and add object fields/array items through the tree, with valid JSON input and stale-source protection.
+- Tables: selected-column whitespace cleanup, number/date normalization, empty-cell fill, preview and undo. Numeric cleanup preserves leading zeros; invalid dates/numbers are retained.
+- Audio: 0–100% within-file RMS leveling over 250 ms windows, interpolated gain, a silence gate, gain bounds and peak protection. This is not LUFS mastering or literal equal amplitude at every sample. Crossfade joins selected fragments of a single source file; batch inputs remain gain-only.
+- QR: labeled A4 sheets, variable grid and multi-page PDF, first-page preview.
+- World clocks: one reference date and shared time slider across all zones.
+- Dates: user-defined working weekdays/excluded dates and optional start/end progress. Start date is excluded and end included in working-day counts; no automatic national holiday calendar.
+- Randomizer: cross-run weighted bag and balanced groups with together/apart pair constraints. Constrained searches are bounded and report conflicting/unsatisfied limits.
+- Device tester: active buttons bright green, released tested buttons nearly white green, including mouse/gamepad history. Blur clears stuck key states.
+- Icon readability: 16/20/24/32/48 px at actual size on light, dark and busy backgrounds.
+- Prompter: duration-based pace estimate, `[[notes]]`, `**emphasis**` and text Document Picture-in-Picture. PiP requires a compatible secure desktop browser and remains tied to the original page. Notes are visually distinct and excluded from word counts, not automatic timed pauses.
+- Layout recovery: selectable fragment candidates; the user approves the relevant fragments.
+- Unicode symbols: configurable single/double/heavy/rounded text frames with copy/TXT export.
+- Text checks: literal custom replacement rules with explanations, case setting, local profiles and JSON import/export.
+- Fonts: characters missing from a parsed font are highlighted as potential fallback. Exact detection remains unavailable for unparsed WOFF2/remote fonts; their coverage is explicitly unverified.
+- Whiteboard: bound arrow endpoints, elbow routing/bend offset and labels; figure movement updates connections. Compact sticky toolbar, inline text editing, eraser, one-shot tools/lock, copy/cut/paste, duplication, grouping, selection/nudge/zoom shortcuts, wheel pan and Ctrl/Cmd-wheel zoom. Existing `.gmboard` files remain supported. Pointer and keyboard interactions draw on the documented Miro/Excalidraw patterns; the board remains an independent implementation.
+
+Reference sources for controls and PiP:
+- https://help.miro.com/hc/en-us/articles/360017731033-Shortcuts-and-hotkeys
+- https://github.com/excalidraw/excalidraw/blob/master/packages/excalidraw/components/HelpDialog.tsx
+- https://developer.chrome.com/docs/web-platform/document-picture-in-picture
+
+`node tests/refinements.mjs` verifies palette provenance, leveling, crossfades, cleanup, working-day arithmetic, constrained allocation, bound arrows and catalog changes. Additional dependency DOMPurify is pinned in `vendor-src` and self-hosted as `tools/vendor/purify.js`; license texts are included in THIRD_PARTY_NOTICES.txt.

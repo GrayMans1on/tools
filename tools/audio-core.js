@@ -1,3 +1,4 @@
+import {levelAudio} from './release-core.js?v=20261031-v06';
 import { sleep } from './ui.js';
 
 export async function decodeAudio(file) {
@@ -81,6 +82,7 @@ export async function processAudio(buffer, options) {
   } else if (options.channel === 'left') { channels = [channels[0]]; }
   else if (options.channel === 'right') { channels = [channels[1] || channels[0]]; }
   else if (options.channel === 'swap' && channels.length > 1) { channels.reverse(); }
+  channels = levelAudio(channels, rate, options.level || 0);
   const gain = Math.pow(10, (options.gain || 0) / 20);
   const fadeIn = Math.max(0, options.fadeIn || 0) * rate;
   const fadeOut = Math.max(0, options.fadeOut || 0) * rate;

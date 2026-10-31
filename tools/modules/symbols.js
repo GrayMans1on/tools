@@ -1,4 +1,4 @@
-import { $, esc, field, select, action, status, copy, restore, persist } from '../ui.js';
+import { $, esc, field, select, action, status, copy, restore, persist, download } from '../ui.js';
 import { unicodeBlocks, unicodeInfo, code } from '../unicode-core.js';
 
 export function unicode(root) {
@@ -24,6 +24,9 @@ export function unicode(root) {
 }
 export async function symbols(root) {
   root.innerHTML = `<section class="panel"><div class="row">${field('symbolSearch', 'Поиск по английскому имени или U+2192')}${select('symbolBlock', 'Категория', [['all', 'Все категории'], ['favorite', 'Избранное'], ...unicodeBlocks.map((item, index) => [String(index), item[0]])])}</div><p class="muted">Нажатие копирует знак. Звёздочка добавляет в избранное. Названия знаков — английские; категории — русские.</p><p id="symbolCount" class="muted"></p><div id="symbolGrid" class="symbol-grid"></div><div class="actions"><button id="symbolMore">Показать ещё</button></div><h3>Недавно использованные</h3><div id="recentSymbols" class="chips"></div></section>`;
+  const frames=document.createElement('section');frames.className='panel';frames.innerHTML='<h2>Конструктор рамок</h2>'+select('frameStyle','Линии',[['light','Тонкие'],['double','Двойные'],['heavy','Толстые'],['round','Скруглённые']])+field('framePadding','Поля, символов','number',1,'min="0" max="10"')+'<label>Содержимое<textarea id="frameText">Заголовок\nСодержимое</textarea></label><div class="actions"><button id="buildFrame">Построить</button><button id="copyFrame">Копировать</button><button id="saveFrame">Скачать TXT</button></div><pre id="frameResult"></pre>';root.append(frames);
+  function buildFrame(){const lines=$('frameText').value.replace(/\t/g,'    ').split('\n');if(lines.length>100||lines.some(line=>[...line].length>200)){throw new Error('Рамка: до 100 строк по 200 символов.');}const width=text=>[...new Intl.Segmenter('ru',{granularity:'grapheme'}).segment(text)].reduce((sum,item)=>sum+(/^[\p{Mark}\p{Control}]+$/u.test(item.segment)?0:/[\p{Extended_Pictographic}\u2e80-\ua4cf\uac00-\ud7a3\uff01-\uff60]/u.test(item.segment)?2:1),0);const max=Math.max(0,...lines.map(width));const pad=Math.max(0,Math.min(10,Number($('framePadding').value)||0));const [tl,tr,bl,br,h,v]={light:'┌┐└┘─│',double:'╔╗╚╝═║',heavy:'┏┓┗┛━┃',round:'╭╮╰╯─│'}[$('frameStyle').value];$('frameResult').textContent=[tl+h.repeat(max+pad*2)+tr,...lines.map(line=>v+' '.repeat(pad)+line+' '.repeat(max-width(line)+pad)+v),bl+h.repeat(max+pad*2)+br].join('\n');}
+  action('buildFrame',buildFrame);action('copyFrame',()=>{buildFrame();return copy($('frameResult').textContent);});action('saveFrame',()=>{buildFrame();download(new Blob([$('frameResult').textContent],{type:'text/plain;charset=utf-8'}),'unicode-frame.txt');});buildFrame();
   const data = [];
   const favorites = new Set(restore('symbol-favorites', [])); let recent = restore('symbol-recent', []); let limit = 120;
   for (const [block, start, end] of unicodeBlocks) {
