@@ -218,3 +218,18 @@ mark { color: #634f26; background: #f5e6be; }
 .board-help { max-width:650px;max-height:85vh;overflow:auto;border:1px solid #dce1eb;border-radius:12px;padding:25px; }
 .board-help::backdrop { background:#20273555; }
 @media(max-width:650px){.custom-rule{grid-template-columns:1fr 1fr}.markdown-workspace{grid-template-columns:1fr}#mdSource,#mdPreview{height:440px}.icon-readability{gap:12px;padding:10px}.board-toolbar{position:static}.board-stage{height:480px}.board-tools button{padding:7px 9px}}
+
+/* Procedural effect inspectors and puzzle workspaces. */
+.fx-layout { display:grid; grid-template-columns:minmax(270px,360px) minmax(0,1fr); gap:18px; align-items:start; }
+.fx-inspector { max-height:860px; overflow:auto; }
+.fx-module { margin-top:14px; border:1px solid #e1e5ef; border-radius:8px; padding:0; overflow:hidden; }
+.fx-module > summary { padding:12px; background:#f5f6fa; font:600 12px/1.5 system-ui; }
+.fx-module > .row { padding:14px; }
+.fx-module .row > label { min-width:110px; }
+.fx-stage { position:sticky; top:8px; }
+#pathPad, #puzzleCanvas { touch-action:none; }
+#pathPad { cursor:crosshair; border:1px solid #dfe3ed; width:100%; }
+#puzzleCanvas { margin:auto; width:100%; max-width:800px; }
+.cipher-key { display:grid; grid-template-columns:repeat(auto-fit,minmax(70px,1fr)); gap:5px; font:12px monospace; }
+.cipher-key span { padding:8px; background:#f3f5fa; border-radius:4px; }
+@media(max-width:850px) { .fx-layout { grid-template-columns:1fr; } .fx-inspector { max-height:none; } .fx-stage { position:static; } }

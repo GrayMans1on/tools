@@ -54,6 +54,10 @@ function qrPattern(x, y, cell = 3) {
 }
 
 const pictures = {
+  strokes: () => `<path d="M35 108Q80 25 125 90T220 80T285 58" fill="none" stroke="#c6d7f3" stroke-width="15" stroke-linecap="round"/><path d="m37 110 34-53 13 28 34-24-8 38 39-17 20 19 37-39 11 20 63-25" fill="none" stroke="#7e92ba" stroke-width="3" stroke-linejoin="round"/>` + text(32, 145, 'DRAW A PATH · MAKE IT GLOW', 8),
+  particles: () => [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23].map(i => { const a=i*2.4;const r=20+i*2;return `<circle cx="${163+Math.cos(a)*r}" cy="${85+Math.sin(a)*r*.65}" r="${2+i%4}" fill="${i%2?'#9baecd':'#b5cbbb'}" opacity="${.4+i%5*.12}"/>`; }).join('') + line(160,139,160,106,'#9eabc1',2) + `<path d="m153 114 7-8 7 8" fill="none" stroke="#9eabc1" stroke-width="2"/>` + text(30, 28, 'SEED 42 · EMISSION', 8),
+  puzzles: () => [0,1,2,3,4,5,6,7,8].map(i => rect(84+i%3*48,25+Math.floor(i/3)*42,44,38,i===7?'#e5e9f2':['#9bacc7','#bbc9dd','#c8d8cf'][i%3],4,'#9aabc4') + (i===7?'':text(106+i%3*48,50+Math.floor(i/3)*42,String(i+1),13,'#fff','text-anchor="middle"'))).join('') + arrow(242, 84),
+  ciphers: () => rect(34,56,91,55,paper,6,'#bac4d7') + text(80,90,'Привет',15,ink,'text-anchor="middle"') + arrow(141,82) + rect(190,56,96,55,'#e8edf6',6,'#bac4d7') + text(238,91,'△ ◈ ○',19,ink,'text-anchor="middle"') + text(160,139,'ENCODE ⇄ DECODE',8,ink,'text-anchor="middle" letter-spacing="2"'),
   ascii: () => windowFrame(38, 33, 245, 110) + [0,1,2,3,4].map(i => text(60, 70+i*14, ['··::++**##@@','··::++**##@@','··::++**##@@','··::++**##@@','··::++**##@@'][i], 12, ['#a6b3ca','#94a5c0','#7f91ac','#6a7d98','#586c88'][i], 'font-family="monospace"')).join('') + text(239, 108, 'Aa', 30, ink, 'text-anchor="middle"'),
   markdown: () => windowFrame(31,36,258,103) + line(155,53,155,136,'#dce1ec',1) + text(46,77,'# Текст',14,ink,'font-family="monospace"') + text(46,101,'**мысль**',12,'#8da696','font-family="monospace"') + text(173,81,'Текст',22,ink,'font-weight="600"') + text(173,108,'мысль',14,'#8da696','font-weight="600"'),
 

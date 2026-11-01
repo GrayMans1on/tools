@@ -30,6 +30,6 @@ moveObject(object, 5, -5); assert.deepEqual(bounds(object), {x:15,y:15,w:100,h:5
 scaleObject(object, bounds(object), 2, 2); assert.equal(bounds(object).w, 200);
 assert.throws(() => validateBoard({...board, assets: {bad:'https://example.com/private.png'}}));
 assert.throws(() => validateBoard({...board, objects:[{...object, color:'url(https://example.com)'}]}));
-assert.equal(new Set(tools.map(tool => tool.id)).size, 28);
+assert.equal(new Set(tools.map(tool => tool.id)).size, 32);
 for (const tool of tools.filter(item => item.id !== 'pixel-nearest')) { assert.ok(cardIllustration(tool.id).includes('<svg'), tool.id); }
 console.log('PASS: text statistics, Unicode graphemes, splitting, safe replacements, checks, FFT peak, board validation/transforms, catalog illustrations.');
