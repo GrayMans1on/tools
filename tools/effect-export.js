@@ -27,7 +27,7 @@ export async function exportEffect({format, settings, draw, canvas, cancelled}) 
     for (let i = 0; i < total; i += 1) {
       if (cancelled()) { status('Экспорт отменён.'); return; }
       if (failure) { throw failure; }
-      draw(i / fps, format === 'mp4');
+      await draw(i / fps, format === 'mp4');
       if (zip) { zip.file(`frame_${String(i).padStart(6, '0')}.png`, await toBlob(canvas)); }
       if (gif) {
         const pixels = canvas.getContext('2d').getImageData(0, 0, width, height).data;

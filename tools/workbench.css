@@ -233,3 +233,39 @@ mark { color: #634f26; background: #f5e6be; }
 .cipher-key { display:grid; grid-template-columns:repeat(auto-fit,minmax(70px,1fr)); gap:5px; font:12px monospace; }
 .cipher-key span { padding:8px; background:#f3f5fa; border-radius:4px; }
 @media(max-width:850px) { .fx-layout { grid-template-columns:1fr; } .fx-inspector { max-height:none; } .fx-stage { position:static; } }
+
+/* Particle Studio module inspector. */
+.ps-layout { display:grid; grid-template-columns:minmax(290px,380px) minmax(0,1fr); gap:18px; align-items:start; }
+.ps-header .row > label { min-width:130px; }
+.ps-inspector { max-height:1000px; overflow:auto; }
+.ps-right { min-width:0; }
+.ps-stage { position:static; }
+.ps-module { padding:0; border:1px solid #e0e5ed; border-radius:8px; margin-top:12px; overflow:hidden; }
+.ps-module > summary { display:flex; gap:8px; align-items:center; padding:13px 11px; background:#f2f4f9; font:600 12px/1.5 system-ui; }
+.ps-module > summary::before { content:'▸'; color:#909bb1; }
+.ps-module[open] > summary::before { content:'▾'; }
+.ps-module > summary small { margin-left:auto; font-size:9px; color:#7e8aa2; }
+.ps-module > summary input { accent-color:#57966f; }
+.ps-module-body { padding:14px; }
+.ps-module-body > .row:empty { display:none; }
+.ps-module-body .row > label { min-width:95px; }
+.ps-check { align-self:center; padding:10px 0; }
+.ps-parameter { border-top:1px solid #e7ebf2; margin-top:16px; padding-top:14px; }
+.ps-param-title strong, .ps-gradient > strong { font-size:12px; color:#566079; }
+.ps-param-title select { font-size:11px; padding:8px; }
+.ps-parameter canvas { width:100%; margin-top:10px; touch-action:none; cursor:crosshair; border:1px solid #e2e7f0; }
+.ps-parameter .row > label { min-width:65px; }
+.ps-parameter .actions { gap:5px; margin-top:10px; }
+.ps-parameter button { font-size:10px; padding:7px; }
+.ps-gradient { margin-top:16px; }
+.ps-gradient > canvas { width:100%; height:24px; margin:10px 0; border:1px solid #dfe3ed; background:repeating-conic-gradient(#dfe4ed 0 25%,white 0 50%) 0/12px 12px; }
+.ps-gradient-keys .row { gap:6px; align-items:end; margin-bottom:6px; }
+.ps-gradient-keys .row > label { min-width:40px; }
+.ps-gradient-keys input[type=color] { width:100%; height:39px; }
+.ps-gradient-keys button { padding:9px; }
+#bursts { margin-top:20px; }
+#bursts th, #bursts td { padding:5px; }
+#bursts input { min-width:65px; padding:7px; }
+#bursts .table-wrap { max-height:360px; margin-bottom:10px; }
+@media(max-width:850px) { .ps-layout { grid-template-columns:1fr; } .ps-right { grid-row:1; } .ps-inspector { max-height:none; } .ps-stage { position:static; } }
+.ps-exporting .ps-inspector { pointer-events:none; opacity:.7; }

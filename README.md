@@ -112,3 +112,25 @@ Reference sources for controls and PiP:
 - Ciphers: reversible UTF-8 geometric base32 alphabet with editable/shufflable key, SVG and key export; Caesar (EN/RU with Ё), Atbash, Vigenere, rail fence and stable columnar transposition. Classical methods preserve punctuation and have documented key rules. Analysis includes Caesar shifts and character frequencies. Classic ciphers and visual codes are puzzle encodings, not secure encryption. Optional AES-256-GCM uses Web Crypto, a fresh 16-byte salt, 12-byte IV and PBKDF2-SHA256/250,000 iterations; wrong password/tampering fails authentication. Passwords are not persisted. AES requires HTTPS. SVG glyph appearance depends on installed symbol fonts.
 
 Additional validation: `node tests/creative.mjs` checks Unicode/classical/AES round trips, invalid keys, authenticated decryption failures, deterministic seeds and time-addressable simulation. The existing core, expansion and refinements suites remain applicable.
+
+
+## v0.8 — Particle Studio
+
+The particles route now uses a dedicated deterministic 2D simulator and inspector. Visual strokes retain their existing renderer.
+
+- 24 inspector sections, module search, enable switches, up to six emitter layers (add, duplicate, reorder, hide, solo), undo/redo and local presets.
+- Numeric parameters support Constant, Random Between Two Constants, Curve and Random Between Two Curves. Curves have 2–16 editable/draggable keys, linear/smooth/step interpolation and quick shapes. Gradients have 2–16 color/alpha stops; lifetime colors can interpolate between two gradients.
+- Main: looping emission, one-cycle prewarm, delay, per-layer simulation speed, max particles, world/local space, random start lifetime/speed/size/rotation/color.
+- Emission: rate curve, rate over emitter distance and up to 24 Burst rows, each with count range, repeat count, interval and probability. Burst repeats outside the emission Duration are excluded. Point, cone, circle/sector, ring/arc, box interior/perimeter and line shapes; thickness, arc and randomized direction.
+- Emitter motion: static, sinusoidal line or ellipse, with inherit velocity and lifetime scaling by emitter speed.
+- Velocity over Lifetime: linear XY, orbital and radial motion. Force over Lifetime: XY curves and gravity. Velocity limit/dampening, drag, deterministic multi-octave smooth noise and attractor/repulsor/vortex field.
+- Color, size and rotation modules respond to lifetime and actual particle speed. Separate size axes are supported. The speed range is shared from Color by Speed.
+- Collision: scene bounds or one horizontal plane, bounce, friction, lifetime loss and minimum kill speed. Triggers: rectangular enter region with kill, color or sub-emitter action. These are browser 2D primitives, not Unity Physics or scene colliders.
+- Sub Emitters: birth/death/collision/trigger events with probability, count, lifetime, radial speed, size, color and inherited velocity. Only one child generation is allowed; at most 16 sub-emitter events per parent. Children have their own lifetime/size/color and simplified parent forces, collisions and rendering, without recursive spawning.
+- Texture Sheet Animation: equal grid tiles, whole-sheet or single-row playback, cycles and seeded random start frame. Custom sprites are embedded in projects, tinted by gradients and optionally flipped; renderer supports soft glow/circle/square/star/custom/stretched sprites, four blending modes, sorting and velocity alignment.
+- Trails: lifetime, ratio, sample limit, width curve, sampled per-segment color/alpha, optional persistence after particle death and world/local trails. Samples are taken at 30 Hz.
+- Seeded fixed 1/60 s integration is shared by playback, backward seek and export. No external random source is used by the simulator. Backward seek recalculates deterministically. A 20-million particle-update limit applies per seek to prevent unbounded computation; complex scenes may need fewer particles or shorter times.
+- PNG, PNG sequence ZIP, GIF, silent H.264 MP4 and paginated PNG sprite-sheet ZIP with frame rectangles/timestamps and project metadata. Export awaits asynchronous simulation. Guides are excluded. Existing limits: 1800 frames and one billion aggregate pixels, even dimensions up to 1920×1080 and 1–60 FPS. PNG has full alpha, GIF binary alpha, MP4 an opaque background. Sprite sheets are capped at 8192 px per side and 40M pixels per page.
+- Projects: GM Particle Studio v2 with scene/layers/textures. The v0.7 particles JSON format is migrated into the new engine; physical results differ because the simulator changed. Existing v0.7 source remains available. No .prefab import, Unity 3D mesh renderer, real-time 3D lights or Unity C# runtime.
+
+Run `node tests/particles.mjs` for curves/gradients, seed determinism, backward seek, rate/loop/Burst behavior, prewarm, local/world motion, distance emission, caps, collisions, sub-emitters, triggers, trail persistence and legacy/project validation. Existing test suites remain required.
