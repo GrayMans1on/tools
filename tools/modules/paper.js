@@ -3,7 +3,7 @@ import { num, readNumber, projectControls, bindProject, canvasPoint, safe } from
 import { paperMesh, paperNet, netSVG, projectMesh } from "../paper-core.js?v=20261101-v09";
 async function paper(root) {
   const shapes = [["cube", "Куб"], ["box", "Коробка"], ["tetra", "Тетраэдр"], ["octa", "Октаэдр"], ["pyramid", "Пирамида"], ["triPrism", "Треугольная призма"], ["hexPrism", "Шестигранная призма"], ["cylinder", "12-гранный цилиндр"]];
-  root.innerHTML = `<section class="panel"><div class="row">${select("shape", "Модель", shapes)}${num("size", "Ребро основания, мм", 30, 10, 100)}${num("depth", "Глубина / высота, ×", 1, 0.3, 3, 0.1)}${num("tabs", "Клапан, мм", 4, 1, 10)}${field("color", "Цвет граней", "color", "#b5c9df")}<label><input id="numbers" type="checkbox" checked> Номера граней и швов</label></div><div class="actions"><button id="build" class="primary">Построить</button><button id="resetView">Сбросить 3D-вид</button><button id="svg">Развёртка SVG</button><button id="pdf">Развёртка PDF</button><button id="png">3D-вид PNG</button></div><p class="muted">В 3D: перетаскивание вращает модель, колесо приближает. SVG и PDF сохраняют размеры в миллиметрах; печатай 100%, без подгонки. Сплошные линии — резать, пунктир — сгибать. Числа на швах обозначают склеиваемые пары. PDF имеет страницу по размеру развёртки.</p>${projectControls()}</section><div class="two"><section class="panel"><h2>Модель · вращение и масштаб</h2><canvas id="model" width="640" height="520" class="lab-canvas" aria-label="Вращаемая бумажная модель"></canvas><label><input id="rotate" type="checkbox"> Автовращение</label></section><section class="panel"><h2>Развёртка</h2><div id="net" class="paper-net"></div><p id="dimensions" class="muted"></p></section></div>`;
+  root.innerHTML = `<section class="panel"><div class="row">${select("shape", "Модель", shapes)}${num("size", "Ребро основания, мм", 30, 10, 100)}${num("depth", "Глубина / высота, ×", 1, 0.3, 3, 0.1)}${num("tabs", "Клапан, мм", 4, 1, 10)}${field("color", "Цвет граней", "color", "#b5c9df")}<label><input id="numbers" type="checkbox" checked> Номера граней и швов</label></div><div class="actions"><button id="build" class="primary">Построить</button><button id="resetView">Сбросить 3D-вид</button><button id="svg">Развёртка SVG</button><button id="pdf">Развёртка PDF</button><button id="png">3D-вид PNG</button></div><p class="muted">В 3D: перетаскивание вращает модель, колесо приближает. SVG и PDF сохраняют размеры в миллиметрах; печатай 100%, без подгонки. Сплошные линии — резать, пунктир — сгибать. Числа на швах обозначают склеиваемые пары. PDF имеет страницу по размеру развёртки.</p>${projectControls()}</section><div class="two"><section class="panel"><h2>Модель · вращение и масштаб</h2><canvas id="model" width="640" height="520" class="lab-canvas" aria-label="Вращаемая бумажная модель"></canvas><label>Масштаб 3D<input id="zoom" type="range" min="60" max="400" value="190"></label><label><input id="rotate" type="checkbox"> Автовращение</label></section><section class="panel"><h2>Развёртка</h2><div id="net" class="paper-net"></div><p id="dimensions" class="muted"></p></section></div>`;
   let settings, mesh, net, svg, rx = -0.4, ry = 0.6, zoom = 190, drag, frame, disposed = false;
   const c = $("model"), ctx = c.getContext("2d");
   function config() {
@@ -60,6 +60,7 @@ async function paper(root) {
     rx = -0.4;
     ry = 0.6;
     zoom = 190;
+    $("zoom").value = zoom;
     draw();
   });
   action("svg", () => download(new Blob([svg], { type: "image/svg+xml" }), "paper-model-net.svg"));
@@ -119,9 +120,11 @@ async function paper(root) {
   c.addEventListener("pointercancel", () => {
     drag = null;
   });
+  $("zoom").addEventListener("input", () => { zoom = Number($("zoom").value); draw(); });
   c.addEventListener("wheel", (e) => {
     e.preventDefault();
     zoom = Math.max(60, Math.min(400, zoom * Math.exp(-e.deltaY * 1e-3)));
+    $("zoom").value = zoom;
     draw();
   }, { passive: false });
   function tick() {
