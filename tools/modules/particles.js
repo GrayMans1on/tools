@@ -1,3 +1,4 @@
+import {particlePresetList, makeParticlePreset} from '../particle-presets.js?v=20261101-v09';
 import { $, esc, field, select, files, action, status, toBlob, download, readImage, teardown, sleep } from "../ui.js";
 import {
   ParticleEngine,
@@ -14,9 +15,9 @@ import {
   choices,
   clamp,
   sample
-} from "../particle-engine.js?v=20261101-v08";
-import { parameterEditor, gradientEditor } from "../particle-editors.js?v=20261101-v08";
-import { exportEffect } from "../effect-export.js?v=20261101-v08";
+} from "../particle-engine.js?v=20261101-v09";
+import { parameterEditor, gradientEditor } from "../particle-editors.js?v=20261101-v09";
+import { exportEffect } from "../effect-export.js?v=20261101-v09";
 const labels = {
   shape: ["Конус", "Точка", "Круг / сектор", "Кольцо / дуга", "Прямоугольник", "Периметр", "Линия"],
   motion: ["Неподвижный", "Туда-обратно", "Эллипс"],
@@ -93,6 +94,8 @@ const modules = [
   { title: "Renderer", body: [["sprite", "Render Mode", "select"], ["blend", "Blend", "select"], ["sort", "Sort Mode", "select"], ["alignVelocity", "Align to Velocity", "check"], ["flipX", "Random Flip X"], ["flipY", "Random Flip Y"], ["stretch", "Velocity Stretch"], ["glow", "Glow Radius, px"]], extra: "texture" }
 ];
 function preset(name) {
+  const extra = makeParticlePreset(name);
+  if (extra) { return extra; }
   const s = makeLayer();
   if (name === "snow") {
     Object.assign(s, { shape: "box", boxWidth: 850, boxHeight: 0, y: 0, angle: 90, spread: 10, gravity: 5, noise: 15, sprite: "circle", blend: "source-over", life: parameter(7, 10), speed: parameter(30, 65), size: parameter(2, 7), startColorA: "#ffffff", startColorB: "#d8e9ff", colorKeys: gradient("#ffffff", "#c7dbff"), sizeX: parameter(1), rate: parameter(45), bursts: [] });
@@ -315,6 +318,7 @@ async function particles(root) {
     "",
     'placeholder="Noise, Collision, Trails…"'
   )}<div class="actions"><button id="expand">Развернуть</button><button id="collapse">Свернуть</button></div><div id="inspector"></div></section><div class="ps-right"><section class="panel ps-stage"><div class="checker preview-wrap"><canvas id="scene" aria-label="Сцена системы частиц"></canvas></div><div class="actions"><button id="play" class="primary">Играть</button><button id="pause">Пауза</button><button id="restart">В начало</button><button id="step">+1 кадр</button><label><input id="repeat" type="checkbox" checked> Повтор просмотра</label><label><input id="guides" type="checkbox" checked> Направляющие</label></div><label>Позиция<input id="seek" type="range" min="0" max="6" value="1" step=".001"></label><p id="time" class="muted"></p><p id="stats" class="muted"></p><div class="actions"><button id="png">PNG кадр</button><button id="sequence">PNG sequence</button><button id="gif">GIF</button><button id="mp4">MP4</button><button id="atlas">Sprite Sheet</button><button id="cancel">Отмена экспорта</button></div><p class="muted">Направляющие не попадают в экспорт. MP4 без звука и альфа-канала. PNG — полный alpha, GIF — бинарная прозрачность. До 1800 кадров / 1 млрд пикселей. До 6 слоёв, суммарно 8000 Max Particles. Дочерние эмиттеры — один уровень.</p></section><section class="panel"><h2>Сцена и экспорт</h2><div id="sceneSettings" class="row"></div><div class="row">${field("atlasColumns", "Колонок в Sprite Sheet", "number", 4, 'min="1" max="8" step="1"')}</div><p class="muted">Looping повторяет эмиссию, «Повтор просмотра» повторяет только проигрывание сцены. Prewarm предварительно просчитывает один Duration эмиссии. Curves используют время 0–1; by Speed — общий диапазон из Color by Speed.</p><div class="actions"><button id="saveProject">Скачать проект</button><button id="savePreset">Сохранить пресет в браузере</button></div>${files("project", ".json", false)}<div class="row"><label>Мои пресеты<select id="userPresets"></select></label><button id="loadPreset">Применить мой пресет</button></div><p class="muted">Проект включает все слои и текстуры. Настройки старых проектов particles v0.7 переносятся в новый движок; физика эффекта изменится. Локальные пресеты хранят настройки без текстур. Ctrl+Z / Ctrl+Shift+Z — история, Ctrl+S — проект; Space — запуск/пауза вне полей.</p></section></div></div>`;
+  for (const [id, label] of particlePresetList) { $("preset").append(new Option(label, id)); }
   const c = $("scene");
   const ctx = c.getContext("2d");
   const spriteCanvas = document.createElement("canvas");

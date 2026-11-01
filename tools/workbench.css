@@ -269,3 +269,12 @@ mark { color: #634f26; background: #f5e6be; }
 #bursts .table-wrap { max-height:360px; margin-bottom:10px; }
 @media(max-width:850px) { .ps-layout { grid-template-columns:1fr; } .ps-right { grid-row:1; } .ps-inspector { max-height:none; } .ps-stage { position:static; } }
 .ps-exporting .ps-inspector { pointer-events:none; opacity:.7; }
+
+/* Creative laboratories. */
+.lab-canvas { width:100%; height:auto; touch-action:none; background:#f4f6fa; border:1px solid #dde4ef; }
+.pixel-canvas { image-rendering:pixelated; }
+.paper-net { overflow:auto; }
+.paper-net svg { width:100%; height:auto; max-height:620px; }
+#places { margin-top:14px; }
+#places label { min-width:110px; max-width:180px; }
+#layers .drop { padding:10px; margin-top:12px; }

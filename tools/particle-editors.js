@@ -1,5 +1,5 @@
 import { esc } from "./ui.js";
-import { clamp, clone, sampleKeys, sampleGradient } from "./particle-engine.js?v=20261101-v08";
+import { clamp, clone, sampleKeys, sampleGradient } from "./particle-engine.js?v=20261101-v09";
 function parameterEditor(host, title, value, bounds, changed) {
   const [min, max] = bounds;
   let selected = 0;

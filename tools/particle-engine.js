@@ -1,4 +1,4 @@
-import { seeded } from "./effects-core.js?v=20261101-v08";
+import { seeded } from "./effects-core.js?v=20261101-v09";
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
