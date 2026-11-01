@@ -73,7 +73,7 @@ export function puzzleGame(host, config) {
   }
   function coordinates(e) { const r = c.getBoundingClientRect(); return {x: (e.clientX - r.left) * c.width / r.width, y: (e.clientY - r.top) * c.height / r.height}; }
   function down(e) {
-    if (disposed || !image.complete || finished) { return; } const pos = coordinates(e); c.focus({preventScroll: true});
+    if (disposed || !image.complete || finished) { return; } e.preventDefault(); const pos = coordinates(e); c.focus({preventScroll: true});
     if (mode === 'jigsaw') {
       const p = [...pieces].reverse().find(v => !v.fixed && ctx.isPointInPath(v.path, pos.x - v.x, pos.y - v.y));
       if (p) { pieces.splice(pieces.indexOf(p), 1); pieces.push(p); drag = {p, dx: pos.x - p.x, dy: pos.y - p.y}; c.setPointerCapture(e.pointerId); }

@@ -1,6 +1,6 @@
 import {$, field, select, files, action, status, number, toBlob, download, readImage, teardown} from '../ui.js';
-import {seeded, buildParticles, particleAt, pathPoint, hexColor, mix} from '../effects-core.js?v=20261101-v07';
-import {exportEffect} from '../effect-export.js?v=20261101-v07';
+import {seeded, buildParticles, particleAt, pathPoint, hexColor, mix} from '../effects-core.js?v=20261101-v07r2';
+import {exportEffect} from '../effect-export.js?v=20261101-v07r2';
 
 const numeric = (id, title, value, min, max, step = 1) => field(id, title, 'number', value, `min="${min}" max="${max}" step="${step}"`);
 const modulePanel = (title, body, open = false) => `<details class="fx-module" ${open ? 'open' : ''}><summary>${title}</summary><div class="row">${body}</div></details>`;
