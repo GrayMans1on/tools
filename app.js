@@ -1,5 +1,5 @@
-import { tools } from './catalog.js?v=20261102-v11r2';
-import { cardIllustration } from './illustrations.js?v=20261102-v11r2';
+import { tools, allTools } from './catalog.js?v=20261102-v12';
+import { cardIllustration } from './illustrations.js?v=20261102-v12';
 
 const homeView = document.getElementById('home-view');
 const toolView = document.getElementById('tool-view');
@@ -91,7 +91,7 @@ function showPage() {
   if (id === 'main') {
     return;
   }
-  const tool = tools.find(item => item.id === id);
+  const tool = allTools.find(item => item.id === id);
   homeView.hidden = Boolean(tool);
   toolView.hidden = !tool;
   breadcrumb.textContent = tool ? tool.name : 'Главная';
@@ -108,7 +108,7 @@ function showPage() {
   if (tool && currentTool !== tool.id) {
     frame.title = tool.name;
     toolView.setAttribute('aria-label', tool.name);
-    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html?v=20261102-v11r2' : `tools/workbench.html?v=20261102-v11r2&tool=${tool.id}#${tool.id}`;
+    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html?v=20261102-v12' : `tools/workbench.html?v=20261102-v12&tool=${tool.id}#${tool.id}`;
     document.querySelector('.tool-topline > span').textContent = tool.category.toUpperCase();
     currentTool = tool.id;
   }

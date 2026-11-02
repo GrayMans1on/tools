@@ -1,4 +1,4 @@
-export const tools = [
+export const allTools = [
   ['pixel-nearest', 'Pixel Upscaler', 'Изображения', 'Увеличение и обратное уменьшение пиксель-арта без размытия.', '↗'],
   ['palette', 'Палитра', 'Изображения', 'Цвета изображений, их доли и готовые палитры.', '◈'],
   ['converter', 'Конвертер файлов', 'Файлы', 'Изображения, аудио и документы. Пакетная обработка.', '⇄'],
@@ -48,3 +48,7 @@ export const tools = [
   ['mockup', 'Конструктор игровых UI', 'Творчество', 'Макеты интерфейса поверх скриншота и экспорт фейкшотов.', ''],
   ['markdown', 'Markdown-редактор', 'Текст', 'Живой предпросмотр, оформление, картинки и локальный черновик.', '']
 ].map(([id, name, category, description, symbol]) => ({id, name, category, description, symbol}));
+
+// Temporarily disabled tools retain their source and catalog metadata.
+export const disabledToolIds = new Set(['segments', 'board', 'mechanisms', 'paper', 'terrain', 'spiro', 'livephoto', 'orbits']);
+export const tools = allTools.filter(tool => !disabledToolIds.has(tool.id));

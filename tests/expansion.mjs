@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {textStats, splitText, replaceText, checkText, fixText} from '../tools/text-core.js';
 import {fftPower} from '../tools/spectrum-core.js';
 import {newBoard, validateBoard, bounds, moveObject, scaleObject} from '../tools/board-core.js';
-import {tools} from '../catalog.js';
+import {tools, allTools, disabledToolIds} from '../catalog.js';
 import {cardIllustration} from '../illustrations.js';
 const stats = textStats('Привет мир!\n\nПривет, Влад. 123', 'Привет');
 assert.equal(stats.words, 5); assert.equal(stats.paragraphs, 2); assert.equal(stats.letters, 19); assert.equal(stats.occurrences, 2);
@@ -30,6 +30,13 @@ moveObject(object, 5, -5); assert.deepEqual(bounds(object), {x:15,y:15,w:100,h:5
 scaleObject(object, bounds(object), 2, 2); assert.equal(bounds(object).w, 200);
 assert.throws(() => validateBoard({...board, assets: {bad:'https://example.com/private.png'}}));
 assert.throws(() => validateBoard({...board, objects:[{...object, color:'url(https://example.com)'}]}));
-assert.equal(new Set(tools.map(tool => tool.id)).size, 48);
-for (const tool of tools.filter(item => item.id !== 'pixel-nearest')) { assert.ok(cardIllustration(tool.id).includes('<svg'), tool.id); }
+assert.equal(new Set(allTools.map(tool => tool.id)).size, 48);
+for (const tool of allTools.filter(item => item.id !== 'pixel-nearest')) { assert.ok(cardIllustration(tool.id).includes('<svg'), tool.id); }
 console.log('PASS: text statistics, Unicode graphemes, splitting, safe replacements, checks, FFT peak, board validation/transforms, catalog illustrations.');
+
+assert.equal(tools.length, 40);
+assert.equal(disabledToolIds.size, 8);
+for (const id of disabledToolIds) {
+  assert.ok(allTools.some(tool => tool.id === id), `Missing disabled metadata: ${id}`);
+  assert.ok(!tools.some(tool => tool.id === id), `Disabled tool is listed: ${id}`);
+}
