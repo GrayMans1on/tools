@@ -121,7 +121,7 @@ l">${stage()}<p id="info" class="muted"></p></section></div>`;
     $("info").textContent = `Вокселей: ${voxels2.length} / 4096`;
   }
   function paint(e) {
-    const p = canvasPoint(g, e), x = Math.floor(p.x / 32), z = Math.floor(p.y / 32), y = Number($("layer").value);
+    const p = canvasPoint(g, e), x = Math.floor(p.x / 32), z = Math.floor(p.y / 32), y = clamp(Math.round(Number($("layer").value) || 0), 0, 15);
     if (x < 0 || x > 15 || z < 0 || z > 15) {
       return;
     }

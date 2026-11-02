@@ -51,7 +51,7 @@ o">Отменить</button><button id="redo">Повторить</button><button
 primary">PNG фейкшота</button><button id="svg">SVG</button></div><p class="muted">Собери игровой экран поверх скриншота.\
  Объекты двигаются мышью, нижний правый маркер меняет размер. Порядок в списке — от заднего к переднему. Delete — удалит\
 ь; Ctrl/Cmd+Z — отмена; Shift+Ctrl/Cmd+Z — повтор. Это визуальный макет, кнопки не исполняют игровые действия.</p>${projectControls()}\
-</section><div class="mock-workspace"><section class="panel mock-stage">${stage()}</section><section class="panel"><h2>О\
+</section><div class="mock-workspace"><section class="panel ui-mock-stage">${stage()}</section><section class="panel"><h2>О\
 бъект</h2><label>Слои<select id="layers" size="8" aria-label="Слои макета"></select></label><div class="row">${num(
     "x",
     "X",
