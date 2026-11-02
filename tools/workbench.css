@@ -27,7 +27,22 @@ small, .muted { color: #8b92a0; font-size: 12px; }
 .status { display: block; color: #68758e; font-size: 12px; white-space: pre-wrap; margin-top: 14px; line-height: 1.6; }
 .status.error { color: #a94545; }
 .drop { background: #fafafe; border: 1px dashed #c1c9dd; padding: 24px; border-radius: 9px; }
-.drop input { background: white !important; }
+/* Keep the native picker focusable while the whole area opens it. */
+.file-drop { position:relative; display:block; min-height:200px; cursor:pointer; text-align:center; transition:background .15s,border-color .15s; }
+.file-drop:hover, .file-drop:focus-within, .file-drop.is-dragover { background:#f0f2fa; border-color:#606a86; }
+.file-drop:focus-within { outline:2px solid #606a86; outline-offset:3px; }
+.file-drop.is-disabled { opacity:.5; cursor:not-allowed; }
+.file-drop input[type="file"] { position:absolute; inset:0; width:100%; height:100%; margin:0; padding:0; opacity:0; cursor:inherit; z-index:1; }
+.file-drop-content { display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 0; pointer-events:none; }
+.file-drop-plus { display:grid; place-items:center; width:42px; height:42px; border-radius:12px; background:#e9ecf5; color:#69758d; font-size:28px; margin-bottom:6px; }
+.file-drop-content strong { color:#28282f; font-size:17px; }
+.file-drop-hint, .file-drop-formats { color:#8992a6; font-size:12px; overflow-wrap:anywhere; }
+.file-drop-list { display:flex; flex-direction:column; gap:5px; text-align:left; overflow-wrap:anywhere; max-height:180px; overflow:auto; position:relative; z-index:2; cursor:default; }
+.file-drop-list:not(:empty) { border-top:1px solid #e1e4ed; margin-top:16px; padding-top:14px; }
+.file-drop-message { display:block; text-align:left; color:#a94545; overflow-wrap:anywhere; }
+.file-drop-message:not(:empty) { margin-top:12px; }
+.row > .file-drop { flex-basis:240px; }
+@media(max-width:540px) { .file-drop { padding:20px 14px; } .row > .file-drop { flex-basis:100%; } }
 canvas, video, img.preview { display: block; max-width: 100%; height: auto; border-radius: 7px; }
 .checker { background-color: #f1f1f4; background-image: conic-gradient(#e2e3ea 25%, transparent 0 50%, #e2e3ea 0 75%, transparent 0); background-size: 20px 20px; padding: 14px; border-radius: 9px; }
 .preview-wrap { display: flex; justify-content: center; align-items: center; overflow: auto; min-height: 160px; }
