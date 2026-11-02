@@ -54,6 +54,15 @@ function qrPattern(x, y, cell = 3) {
 }
 
 const pictures = {
+  voxels: () => [0,1,2].map(y => [0,1,2].map(x => `<path d="M${110+x*22-y*22} ${85+x*11+y*11}l22-11 22 11v25l-22 11-22-11z" fill="${x===1?'#a1b8ac':'#a9b6cd'}" stroke="#fafbfe"/>`).join('')).join(''),
+  spiro: () => `<g fill="none" stroke="#8c9bbb" stroke-width="1.2">${Array.from({length:22},(_,i)=>`<ellipse cx="160" cy="86" rx="82" ry="22" transform="rotate(${i*180/22} 160 86)"/>`).join('')}</g>`,
+  vectorize: () => sheet(48,48,'PNG') + arrow(128,84) + `<path d="M200 121l25-70 40 70z" fill="none" stroke="#8c9bbb" stroke-width="3"/>` + [ [200,121],[225,51],[265,121] ].map(([x,y])=>rect(x-4,y-4,8,8,'#a6bdb0',1)).join(''),
+  rig: () => `<path d="M160 38v48m-42-20 42 20 42-20m-42 20-24 48m24-48 24 48" stroke="#a7b6cc" stroke-width="13" fill="none" stroke-linecap="round"/>` + [[160,38],[160,86],[118,66],[202,66],[136,134],[184,134]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="5" fill="#85a593" stroke="white"/>`).join(''),
+  livephoto: () => windowFrame(60,32,200,108) + `<path d="M65 104q24-20 48 0t48 0 48 0 45 0m-180 14q24-20 48 0t48 0 48 0" stroke="#90b1c6" stroke-width="4" fill="none"/>` + `<path d="M150 55v28l25-14z" fill="#94a6c1"/>`,
+  spatial: () => `<ellipse cx="160" cy="90" rx="99" ry="47" fill="none" stroke="#bec9d9" stroke-dasharray="4 4"/><circle cx="160" cy="90" r="17" fill="#a5b8cb"/><path d="M157 68l3-8 4 8" fill="#8fa1bc"/>` + [[68,73],[233,112],[207,53]].map(([x,y])=>rect(x-9,y-9,18,18,'#92b39f',4)+`<path d="M${x+15} ${y-10}q15 10 0 20" stroke="#a5b9cf" fill="none"/>`).join(''),
+  orbits: () => `<g fill="none" stroke="#b4bfd3"><ellipse cx="160" cy="86" rx="102" ry="57"/><ellipse cx="160" cy="86" rx="61" ry="34"/></g><circle cx="160" cy="86" r="17" fill="#d2ba8c"/><circle cx="220" cy="86" r="8" fill="#8faabf"/><circle cx="93" cy="129" r="10" fill="#9bb5a7"/>`,
+  mockup: () => windowFrame(43,30,235,117) + rect(55,55,68,28,'#c3cedf',4)+rect(61,61,48,5,'#b98897',2)+rect(61,71,38,4,'#88a9c3',2)+rect(221,104,42,32,'#b8c8be',4)+rect(123,123,79,13,'#a0aec6',3)+`<path d="M140 62l25 13-12 4-4 13z" fill="#a1aec5"/>`,
+
   mechanisms: () => `<g fill="#b9c7db" stroke="#71829f" stroke-width="2"><circle cx="115" cy="86" r="40"/><circle cx="205" cy="86" r="50"/></g><g fill="none" stroke="#edf3f9" stroke-width="12"><path d="M115 53v66m-33-33h66M205 43v86m-43-43h86"/></g><g fill="#7e91ae"><circle cx="115" cy="86" r="8"/><circle cx="205" cy="86" r="8"/></g>` + text(160,152,'GEARS · BELTS · LINKAGES',8,ink,'text-anchor="middle"'),
   physics: () => line(42,140,280,140,'#aebbd0',3) + [0,1,2,3,4,5].map(i=>rect(155+i%3*35,109-Math.floor(i/3)*35,31,31,['#afc4b4','#b7c5db','#c7bbd3'][i%3],4,'#8a9eb6')).join('') + line(61,33,110,75,'#7f8faa',2) + `<circle cx="114" cy="82" r="19" fill="#b8d5cb" stroke="#7b9a90" stroke-width="2"/>`,
   textures: () => [0,1,2,3,4,5,6,7,8].map(i=>rect(76+i%3*56,14+Math.floor(i/3)*49,55,48,i%2?'#c6d5cb':'#e1e8e0',0,'#adbfbc')+`<path d="M${78+i%3*56} ${37+Math.floor(i/3)*49}q14-20 27 0t27 0" fill="none" stroke="#86a39a" stroke-width="4"/>`).join(''),

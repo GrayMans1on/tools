@@ -1,9 +1,10 @@
+import {extraPhysicsPresets, buildPhysicsExtra, fluidForces} from '../physics-extra.js?v=20261102-v11';
 import { $, select, field, action, status, teardown, download, toBlob } from "../ui.js";
 import { num, readNumber, projectControls, bindProject, canvasPoint, bindPNG } from "../lab-ui.js?v=20261101-v09";
 import { clamp } from "../lab-core.js?v=20261101-v09";
 import { Matter as M } from "../vendor/physics.js";
 async function physics(root) {
-  root.innerHTML = `<section class="panel"><div class="row">${select("preset", "Пресет", [["stack", "Падающая башня"], ["domino", "Домино"], ["pendulum", "Маятники"], ["cradle", "Колыбель Ньютона"], ["bridge", "Подвесной мост"], ["springs", "Пружины"], ["chain", "Цепь"], ["catapult", "Рычаг"], ["motor", "Мотор и шарнир"], ["balls", "Упругие шары"], ["ramp", "Наклонные плоскости"], ["empty", "Пустая сцена"]])}<button id="apply">Загрузить пресет</button>${select("tool", "Инструмент", [["drag", "Выбрать / тащить"], ["circle", "Шар"], ["rect", "Прямоугольник"], ["triangle", "Треугольник"], ["bar", "Брус"], ["wall", "Статичная стенка"], ["spring", "Пружина между телами"], ["rope", "Жёсткая связь"], ["pin", "Шарнир в точке клика"], ["erase", "Удалить"]])}</div><div class="row">${num("gravity", "Гравитация Y", 1, -2, 3, 0.1)}${num("speed", "Скорость симуляции", 1, 0.1, 2, 0.1)}${num("size", "Размер новых тел", 35, 8, 120)}${field("color", "Цвет", "color", "#8aa9c6")}${num("stiffness", "Жёсткость новой связи", 0.03, 1e-3, 1, 1e-3)}</div><div class="actions"><button id="play" class="primary">Играть</button><button id="pause">Пауза</button><button id="step">+1 шаг</button><button id="checkpoint">Запомнить сцену</button><button id="reset">Вернуть сцену</button><button id="png">PNG</button></div><p class="muted">Создавай тела кликом; в режиме выбора тащи их мышью. Для связи выбери два тела. Шарнир прикрепляет тело к точке мира. «Запомнить сцену» задаёт точку возврата. До 240 тел и 320 связей. Столкновения и шарниры — 2D.</p>${projectControls()}</section><section class="panel"><canvas id="world" width="960" height="600" class="lab-canvas" aria-label="Физическая песочница"></canvas><p id="info" class="muted"></p></section><section class="panel"><h2>Выбранное тело</h2><p id="selection" class="muted">Ничего не выбрано.</p><div class="row">${num("mass", "Масса", 2, 0.1, 100, 0.1)}${num("friction", "Трение", 0.2, 0, 1, 0.05)}${num("bounce", "Упругость", 0.5, 0, 1, 0.05)}${num("motor", "Мотор, rad/s", 0, -10, 10, 0.1)}<label><input id="static" type="checkbox"> Статичное</label><button id="applyBody">Применить к телу</button><button id="pinCenter">Шарнир в центре</button></div></section>`;
+  root.innerHTML = `<section class="panel"><div class="row">${select("preset", "Пресет", [...extraPhysicsPresets, ["stack", "Падающая башня"], ["domino", "Домино"], ["pendulum", "Маятники"], ["cradle", "Колыбель Ньютона"], ["bridge", "Подвесной мост"], ["springs", "Пружины"], ["chain", "Цепь"], ["catapult", "Рычаг"], ["motor", "Мотор и шарнир"], ["balls", "Упругие шары"], ["ramp", "Наклонные плоскости"], ["empty", "Пустая сцена"]])}<button id="apply">Загрузить пресет</button>${select("tool", "Инструмент", [["drag", "Выбрать / тащить"], ["circle", "Шар"], ["fluid", "Жидкость · порция"], ["rect", "Прямоугольник"], ["triangle", "Треугольник"], ["bar", "Брус"], ["wall", "Статичная стенка"], ["spring", "Пружина между телами"], ["rope", "Жёсткая связь"], ["pin", "Шарнир в точке клика"], ["erase", "Удалить"]])}</div><div class="row">${num("viscosity", "Вязкость частиц", .15, 0, 1, .05)}${num("cohesion", "Сцепление частиц", .4, 0, 2, .1)}${num("gravity", "Гравитация Y", 1, -2, 3, 0.1)}${num("speed", "Скорость симуляции", 1, 0.1, 2, 0.1)}${num("size", "Размер новых тел", 35, 8, 120)}${field("color", "Цвет", "color", "#8aa9c6")}${num("stiffness", "Жёсткость новой связи", 0.03, 1e-3, 1, 1e-3)}</div><div class="actions"><button id="play" class="primary">Играть</button><button id="pause">Пауза</button><button id="step">+1 шаг</button><button id="checkpoint">Запомнить сцену</button><button id="reset">Вернуть сцену</button><button id="png">PNG</button></div><p class="muted">Создавай тела кликом; в режиме выбора тащи их мышью. Для связи выбери два тела. Шарнир прикрепляет тело к точке мира. «Запомнить сцену» задаёт точку возврата. До 240 тел и 320 связей. Столкновения и шарниры — 2D. Жидкость — приближённая модель частиц с вязкостью и сцеплением, без расчёта сплошной среды. В «Прорыве плотины» удали правую перегородку ластиком. Ткань и мягкие тела состоят из пружин; задай их жёсткость перед загрузкой пресета. Крепления ткани снимаются удалением узла.</p>${projectControls()}</section><section class="panel"><canvas id="world" width="960" height="600" class="lab-canvas" aria-label="Физическая песочница"></canvas><p id="info" class="muted"></p></section><section class="panel"><h2>Выбранное тело</h2><p id="selection" class="muted">Ничего не выбрано.</p><div class="row">${num("mass", "Масса", 2, 0.1, 100, 0.1)}${num("friction", "Трение", 0.2, 0, 1, 0.05)}${num("bounce", "Упругость", 0.5, 0, 1, 0.05)}${num("motor", "Мотор, rad/s", 0, -10, 10, 0.1)}<label><input id="static" type="checkbox"> Статичное</label><button id="applyBody">Применить к телу</button><button id="pinCenter">Шарнир в центре</button></div></section>`;
   let engine = M.Engine.create({ constraintIterations: 8, positionIterations: 8 }), playing = false, last = 0, frame, disposed = false, selected = null, linkStart = null, mouseConstraint = null, nextId = 1, saved;
   const c = $("world"), ctx = c.getContext("2d");
   const bodies = () => M.Composite.allBodies(engine.world).filter((b) => !b.plugin.boundary);
@@ -48,7 +49,7 @@ async function physics(root) {
     engine.gravity.y = Number($("gravity").value);
   }
   function snapshot() {
-    return { gravity: Number($("gravity").value), bodies: bodies().map((b) => ({ id: b.plugin.uid, kind: b.plugin.kind, size: b.plugin.size, x: b.position.x, y: b.position.y, angle: b.angle, vx: b.velocity.x, vy: b.velocity.y, angular: b.angularVelocity, mass: b.isStatic ? 1 : b.mass, friction: b.friction, restitution: b.restitution, isStatic: b.isStatic, color: b.render.fillStyle, motor: b.plugin.motor || 0 })), constraints: constraints().map((con) => ({ a: con.bodyA?.plugin.uid || null, b: con.bodyB?.plugin.uid || null, pa: con.pointA, pb: con.pointB, length: con.length, stiffness: con.stiffness })) };
+    return { viscosity: Number($("viscosity").value), cohesion: Number($("cohesion").value), gravity: Number($("gravity").value), bodies: bodies().map((b) => ({ id: b.plugin.uid, kind: b.plugin.kind, size: b.plugin.size, x: b.position.x, y: b.position.y, angle: b.angle, vx: b.velocity.x, vy: b.velocity.y, angular: b.angularVelocity, mass: b.isStatic ? 1 : b.mass, friction: b.friction, restitution: b.restitution, isStatic: b.isStatic, color: b.render.fillStyle, motor: b.plugin.motor || 0, soft: b.collisionFilter.group < 0, fluid: b.plugin.fluid === true })), constraints: constraints().map((con) => ({ a: con.bodyA?.plugin.uid || null, b: con.bodyB?.plugin.uid || null, pa: con.pointA, pb: con.pointB, length: con.length, stiffness: con.stiffness })) };
   }
   function validate(p) {
     if (!Array.isArray(p.bodies) || p.bodies.length > 240 || !Array.isArray(p.constraints) || p.constraints.length > 320 || !Number.isFinite(p.gravity) || p.gravity < -2 || p.gravity > 3) {
@@ -69,6 +70,9 @@ async function physics(root) {
   }
   function restore(p) {
     validate(p);
+    if (p.viscosity != null && (!Number.isFinite(p.viscosity) || p.viscosity < 0 || p.viscosity > 1) || p.cohesion != null && (!Number.isFinite(p.cohesion) || p.cohesion < 0 || p.cohesion > 2)) { throw new Error("Параметры жидкости."); }
+    $("viscosity").value = p.viscosity ?? .15;
+    $("cohesion").value = p.cohesion ?? .4;
     playing = false;
     empty();
     $("gravity").value = p.gravity;
@@ -78,6 +82,9 @@ async function physics(root) {
       const b = add(data.kind, data.x, data.y, data.size, { isStatic: data.isStatic, friction: data.friction, restitution: data.restitution, render: { fillStyle: data.color } });
       b.plugin.uid = data.id;
       b.plugin.motor = data.motor;
+      b.plugin.fluid = data.fluid === true;
+      if (data.soft === true) { b.collisionFilter.group = -1; }
+      if (b.plugin.fluid) { b.frictionAir = .01; }
       M.Body.setAngle(b, data.angle);
       if (!data.isStatic) {
         M.Body.setMass(b, data.mass);
@@ -96,6 +103,7 @@ async function physics(root) {
     playing = false;
     empty();
     const kind = $("preset").value;
+    buildPhysicsExtra(kind, {M, add, connect, stiffness: readNumber("stiffness", 1e-3, 1)});
     if (kind === "stack") {
       for (let y = 0; y < 7; y += 1) {
         for (let x = 0; x < 4; x += 1) {
@@ -214,7 +222,7 @@ async function physics(root) {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-      if (b.circleRadius) {
+      if (b.circleRadius && !b.plugin.fluid) {
         ctx.beginPath();
         ctx.moveTo(b.position.x, b.position.y);
         ctx.lineTo(b.position.x + Math.cos(b.angle) * b.circleRadius, b.position.y + Math.sin(b.angle) * b.circleRadius);
@@ -232,6 +240,7 @@ async function physics(root) {
     }
     const speed = readNumber("speed", 0.1, 2), steps = Math.ceil(speed);
     for (let i = 0; i < steps; i += 1) {
+      fluidForces(M, bodies().filter(b => b.plugin.fluid), readNumber("viscosity", 0, 1), readNumber("cohesion", 0, 2));
       M.Engine.update(engine, 1e3 / 60 * speed / steps);
     }
     draw();
@@ -279,6 +288,14 @@ async function physics(root) {
         if (b) {
           const local = M.Vector.sub(p, b.position);
           connect(null, b, p, local, 0.95, 0);
+        }
+      } else if (tool === "fluid") {
+        if (bodies().length + 25 > 240) { throw new Error("Для порции жидкости нужно место под 25 частиц."); }
+        for (let y = -2; y <= 2; y += 1) {
+          for (let x = -2; x <= 2; x += 1) {
+            const particle = add("circle", p.x + x * 10, p.y + y * 10, 8, {restitution: 0, friction: 0, frictionAir: .01, render: {fillStyle: "#79b1ce"}});
+            particle.plugin.fluid = true;
+          }
         }
       } else if (tool === "drag") {
         selectBody(b);

@@ -74,5 +74,5 @@ for (let i = 0; i < 60; i++) {
 }
 assert.ok(ball.position.y > 100);
 M.Engine.clear(engine);
-assert.equal(tools.length, 40);
+assert.equal(tools.length, 48);
 console.log("PASS: periodic textures, deterministic terrain/rivers, unfold edge lengths/topology, 3D projection, flood fill, gear ratios, sound/ambience DSP, 48 particle presets and Matter.js dynamics.");
