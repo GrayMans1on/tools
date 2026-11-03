@@ -24,19 +24,37 @@ export function markdown(root) {
   const previous=document.createElement('button');previous.textContent='Предыдущий черновик';previous.onclick=()=>{const data=restore('markdown-previous',null);if(!data){status('Предыдущего черновика нет.');return;}persist('markdown-previous',{text:$('mdSource').value,name:$('mdName').value});$('mdSource').value=data.text;$('mdName').value=data.name;update();};$('saveMD').parentElement.append(previous);
   $('mdImage').onchange=async()=>{try{const file=$('mdImage').files[0];if(!file){return;}if(file.size>15e6){throw new Error('Картинка больше 15 МБ.');}const image=await readImage(file);const ratio=Math.min(1,1000/Math.max(image.width,image.height));const c=canvas(Math.max(1,Math.round(image.width*ratio)),Math.max(1,Math.round(image.height*ratio)));c.getContext('2d').drawImage(image,0,0,c.width,c.height);image.close();const url=c.toDataURL('image/webp',.85);if($('mdSource').value.length+url.length>2e6){throw new Error('Картинка превысит лимит документа. Уменьши её заранее.');}insert(`\n![${file.name.replace(/[\[\]]/g,'')}](${url})\n`);}catch(error){status(error.message,true);}};
   function protectLinks(frame){
-    frame.onload=()=>{const doc=frame.contentDocument;if(doc){doc.addEventListener('click',event=>{
+    frame.onload=()=>{const doc=frame.contentDocument;if(doc){doc.addEventListener('keydown',escapePreview);doc.addEventListener('click',event=>{
       const link=event.target.closest('a');if(link){event.preventDefault();status(`Ссылка: ${link.getAttribute('href')}`);}
     });}};
   }
   protectLinks($('mdPreview'));
   const previewPanel=$('mdPreviewPanel');
+  let expanded=false;let hostStyle='';
+  const hostFrame=window.frameElement;
+  function expandPreview(value){
+    expanded=value;previewPanel.classList.toggle('md-preview-expanded',value);
+    if(hostFrame){
+      if(value){
+        hostStyle=hostFrame.style.cssText;
+        for(const [name,value] of Object.entries({position:'fixed',inset:'0',width:'100vw',height:'100vh','z-index':'2147483647',background:'white'})){
+          hostFrame.style.setProperty(name,value,'important');
+        }
+      }else{hostFrame.style.cssText=hostStyle;}
+    }
+    fullscreenChanged();
+  }
+  function escapePreview(event){if(event.key==='Escape'&&expanded){expandPreview(false);}}
+  document.addEventListener('keydown',escapePreview);
+  window.top.document.addEventListener('keydown',escapePreview);
   function fullscreenChanged(){
-    $('mdFullscreen').textContent=document.fullscreenElement===previewPanel?'Выйти из полного экрана':'Полный экран';
+    $('mdFullscreen').textContent=(expanded||document.fullscreenElement===previewPanel)?'Выйти из полного экрана':'Полный экран';
   }
   document.addEventListener('fullscreenchange',fullscreenChanged);
   action('mdFullscreen',async()=>{
+    if(expanded){expandPreview(false);return;}
     if(document.fullscreenElement===previewPanel){await document.exitFullscreen();}
-    else{await previewPanel.requestFullscreen();}
+    else{try{await previewPanel.requestFullscreen();}catch(error){expandPreview(true);}}
   });
   action('mdPip',async()=>{
     if(pipWindow&&!pipWindow.closed){pipWindow.close();return;}
@@ -58,5 +76,5 @@ export function markdown(root) {
   });
   $('mdSource').onscroll=()=>{if(!$('mdSync').checked){return;}const input=$('mdSource');const ratio=input.scrollTop/Math.max(1,input.scrollHeight-input.clientHeight);for(const frame of [$('mdPreview'),pipPreview]){const doc=frame?.contentDocument;if(doc){doc.documentElement.scrollTop=ratio*(doc.documentElement.scrollHeight-frame.clientHeight);}}};
   function key(event){if((event.ctrlKey||event.metaKey)&&event.code==='KeyS'){event.preventDefault();$('saveMD').click();}if(event.target===$('mdSource')&&(event.ctrlKey||event.metaKey)&&['KeyB','KeyI'].includes(event.code)){event.preventDefault();insert(...operations[event.code==='KeyB'?'bold':'italic']);}if(event.target===$('mdSource')&&event.key==='Tab'){event.preventDefault();insert('  ');}}
-  document.addEventListener('keydown',key);teardown(()=>{disposed=true;pipWindow?.close();document.removeEventListener('fullscreenchange',fullscreenChanged);clearTimeout(timer);clearTimeout(saveTimer);persist('markdown',{name:$('mdName').value,text:$('mdSource').value});document.removeEventListener('keydown',key);});update();
+  document.addEventListener('keydown',key);teardown(()=>{disposed=true;if(expanded){expandPreview(false);}document.removeEventListener('keydown',escapePreview);window.top.document.removeEventListener('keydown',escapePreview);pipWindow?.close();document.removeEventListener('fullscreenchange',fullscreenChanged);clearTimeout(timer);clearTimeout(saveTimer);persist('markdown',{name:$('mdName').value,text:$('mdSource').value});document.removeEventListener('keydown',key);});update();
 }

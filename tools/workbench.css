@@ -224,8 +224,9 @@ mark { color: #634f26; background: #f5e6be; }
 #mdSource { resize:vertical; min-height:400px; }
 .md-preview-heading { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px; }
 .md-preview-heading h2,.md-preview-heading .actions { margin:0; }
-#mdPreviewPanel:fullscreen { display:flex;flex-direction:column;padding:16px;background:white;overflow:hidden; }
-#mdPreviewPanel:fullscreen #mdPreview { flex:1;min-height:0;height:0; }
+#mdPreviewPanel.md-preview-expanded { position:fixed;inset:0;z-index:1000; }
+#mdPreviewPanel:fullscreen,#mdPreviewPanel.md-preview-expanded { display:flex;flex-direction:column;padding:16px;background:white;overflow:hidden; }
+#mdPreviewPanel:fullscreen #mdPreview,#mdPreviewPanel.md-preview-expanded #mdPreview { flex:1;min-height:0;height:0; }
 
 .board-toolbar { position:sticky;top:0;z-index:5;padding:13px 16px;background:#fffffffa;box-shadow:0 4px 20px #303b5010; }
 .board-toolbar .actions { margin-top:8px; }
