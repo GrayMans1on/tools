@@ -1,5 +1,6 @@
-import { tools, allTools } from './catalog.js?v=20261103-md-preview-2';
-import { cardIllustration } from './illustrations.js?v=20261103-md-preview-2';
+import { tools, allTools } from './catalog.js?v=20261103-usage';
+import { readUsage } from './usage.js?v=20261103-usage';
+import { cardIllustration } from './illustrations.js?v=20261103-usage';
 
 const homeView = document.getElementById('home-view');
 const toolView = document.getElementById('tool-view');
@@ -70,6 +71,49 @@ document.getElementById('tool-search').addEventListener('input', renderCatalog);
 document.getElementById('category').addEventListener('change', renderCatalog);
 renderCatalog();
 
+const usagePanel = document.createElement('section');
+usagePanel.className = 'usage-panel';
+usagePanel.setAttribute('aria-labelledby', 'usage-title');
+usagePanel.innerHTML = '<div class="usage-heading"><h2 id="usage-title">Использование инструментов</h2><span id="usage-total"></span></div><div id="usage-chart" class="usage-chart" aria-label="Инструменты по числу открытий"></div><p id="usage-detail" class="usage-detail"></p><p class="usage-note">Каждое открытие — одно использование. Только этот браузер; данные хранятся на устройстве.</p>';
+document.querySelector('.section-heading').before(usagePanel);
+function renderUsage() {
+  const counts = readUsage();
+  const ranked = tools.map(tool => ({...tool, count: counts[tool.id] || 0})).sort((a, b) => b.count - a.count);
+  const total = ranked.reduce((sum, tool) => sum + tool.count, 0);
+  const max = Math.max(1, ...ranked.map(tool => tool.count));
+  document.getElementById('usage-total').textContent = `Открытий: ${total.toLocaleString('ru')}`;
+  const chart = document.getElementById('usage-chart');
+  const detail = document.getElementById('usage-detail');
+  const summary = total ? ranked.filter(tool => tool.count).slice(0, 3)
+    .map(tool => `${tool.name}: ${tool.count.toLocaleString('ru')}`).join(' · ')
+    : 'Открой инструмент — здесь появится статистика. Выше столбик — чаще используется.';
+  detail.textContent = summary;
+  chart.replaceChildren();
+  for (const tool of ranked) {
+    const link = document.createElement('a');
+    link.href = `#${tool.id}`;
+    const label = `${tool.name} · открытий: ${tool.count.toLocaleString('ru')}`;
+    link.title = label;
+    link.setAttribute('aria-label', label);
+    link.className = 'usage-column';
+    const bar = document.createElement('span');
+    bar.className = 'usage-bar';
+    bar.style.height = `${Math.max(3, tool.count / max * 100)}%`;
+    bar.style.opacity = tool.count ? String(.35 + .65 * tool.count / max) : '.15';
+    link.append(bar);
+    link.addEventListener('mouseenter', () => { detail.textContent = label; });
+    link.addEventListener('focus', () => { detail.textContent = label; });
+    link.addEventListener('mouseleave', () => { detail.textContent = summary; });
+    link.addEventListener('blur', () => { detail.textContent = summary; });
+    chart.append(link);
+  }
+}
+window.addEventListener('gm-tools-usage', renderUsage);
+window.addEventListener('storage', event => {
+  if (event.key === 'gm-tools-usage-v1' || event.key === null) { renderUsage(); }
+});
+renderUsage();
+
 function resizeTool() {
   const content = frame.contentDocument;
   if (content && content.body && !toolView.hidden) {
@@ -92,6 +136,7 @@ function showPage() {
     return;
   }
   const tool = allTools.find(item => item.id === id);
+  if (!tool) { renderUsage(); }
   homeView.hidden = Boolean(tool);
   toolView.hidden = !tool;
   breadcrumb.textContent = tool ? tool.name : 'Главная';
@@ -108,7 +153,7 @@ function showPage() {
   if (tool && currentTool !== tool.id) {
     frame.title = tool.name;
     toolView.setAttribute('aria-label', tool.name);
-    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html?v=20261103-md-preview-2' : `tools/workbench.html?v=20261103-md-preview-2&tool=${tool.id}#${tool.id}`;
+    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html?v=20261103-usage' : `tools/workbench.html?v=20261103-usage&tool=${tool.id}#${tool.id}`;
     document.querySelector('.tool-topline > span').textContent = tool.category.toUpperCase();
     currentTool = tool.id;
   }
