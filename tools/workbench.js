@@ -1,7 +1,7 @@
 window.addEventListener('hashchange', () => { location.reload(); });
-import { allTools, disabledToolIds } from '../catalog.js?v=20261102-v12';
+import { allTools, disabledToolIds } from '../catalog.js?v=20261103-md-preview';
 import { esc } from './ui.js';
-import './file-drop.js?v=20261102-v12';
+import './file-drop.js?v=20261103-md-preview';
 const id = location.hash.slice(1) === 'textfiles' ? '' : location.hash.slice(1);
 const tool = allTools.find(item => item.id === id);
 const app = document.getElementById('app');
@@ -27,7 +27,7 @@ if (tool && disabledToolIds.has(id)) {
   document.title = `${tool.name} — GrayMansion Tools`;
   app.innerHTML = `<h1>${esc(tool.name)}</h1><p class="description">${esc(tool.description)}</p><div id="content"></div><div id="status" class="status" role="status" aria-live="polite"></div>`;
   try {
-    const module = await import(`./modules/${modules[id]}.js?v=20261102-v12`);
+    const module = await import(`./modules/${modules[id]}.js?v=20261103-md-preview`);
     await module[id](document.getElementById('content'));
   } catch (error) {
     document.getElementById('status').textContent = `Не удалось открыть инструмент: ${error.message}`;
