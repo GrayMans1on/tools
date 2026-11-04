@@ -1,6 +1,6 @@
-import { tools, allTools } from './catalog.js?v=20261103-usage';
-import { readUsage } from './usage.js?v=20261103-usage';
-import { cardIllustration } from './illustrations.js?v=20261103-usage';
+import { tools, allTools } from './catalog.js?v=20261104-textures';
+import { readUsage } from './usage.js?v=20261104-textures';
+import { cardIllustration } from './illustrations.js?v=20261104-textures';
 
 const homeView = document.getElementById('home-view');
 const toolView = document.getElementById('tool-view');
@@ -153,7 +153,7 @@ function showPage() {
   if (tool && currentTool !== tool.id) {
     frame.title = tool.name;
     toolView.setAttribute('aria-label', tool.name);
-    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html?v=20261103-usage' : `tools/workbench.html?v=20261103-usage&tool=${tool.id}#${tool.id}`;
+    frame.src = tool.id === 'pixel-nearest' ? 'tools/pixel-nearest.html?v=20261104-textures' : `tools/workbench.html?v=20261104-textures&tool=${tool.id}#${tool.id}`;
     document.querySelector('.tool-topline > span').textContent = tool.category.toUpperCase();
     currentTool = tool.id;
   }
