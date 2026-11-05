@@ -1,8 +1,8 @@
 window.addEventListener('hashchange', () => { location.reload(); });
-import { allTools, disabledToolIds } from '../catalog.js?v=20261105-puzzles';
-import { registerUsage } from '../usage.js?v=20261105-puzzles';
+import { allTools, disabledToolIds } from '../catalog.js?v=20261105-puzzle-google';
+import { registerUsage } from '../usage.js?v=20261105-puzzle-google';
 import { esc } from './ui.js';
-import './file-drop.js?v=20261105-puzzles';
+import './file-drop.js?v=20261105-puzzle-google';
 const id = location.hash.slice(1) === 'textfiles' ? '' : location.hash.slice(1);
 const tool = allTools.find(item => item.id === id);
 const app = document.getElementById('app');
@@ -28,7 +28,7 @@ if (tool && disabledToolIds.has(id)) {
   document.title = `${tool.name} — GrayMansion Tools`;
   app.innerHTML = `<h1>${esc(tool.name)}</h1><p class="description">${esc(tool.description)}</p><div id="content"></div><div id="status" class="status" role="status" aria-live="polite"></div>`;
   try {
-    const module = await import(`./modules/${modules[id]}.js?v=20261105-puzzles`);
+    const module = await import(`./modules/${modules[id]}.js?v=20261105-puzzle-google`);
     await module[id](document.getElementById('content'));
     registerUsage(id);
   } catch (error) {
