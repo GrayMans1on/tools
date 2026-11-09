@@ -1,7 +1,8 @@
-name: Deploy GitHub Pages
+name: Suspend GitHub Pages
 on:
   push:
     branches: [main]
+    paths: [.github/workflows/pages.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,24 +15,14 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - name: Prepare public files
+      - name: Prepare unavailable page
         run: |
           mkdir _site
-          cp index.html styles.css app.js usage.js catalog.js illustrations.js favicon.svg logo.png .nojekyll _site/
-          cp -R tools _site/tools
-      - name: Upload site
-        uses: actions/upload-pages-artifact@v3
+          touch _site/.nojekyll
+          printf '%s\n' '<!doctype html><html lang="ru"><meta charset="utf-8"><title>Сайт отключён</title><h1>Сайт временно отключён</h1></html>' > _site/404.html
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@v4
